@@ -1,25 +1,27 @@
+import { ScreenContent } from '@/features/ui/ScreenContent';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { ScreenContent } from '@/features/ui/ScreenContent';
 import { StyleSheet, View } from 'react-native';
 
+import { RootStackParamList } from './root-stack';
 import { Button } from '../ui/Button';
-import { RootStackParamList } from '../navigation';
 
-type OverviewScreenNavigationProps = StackNavigationProp<RootStackParamList, 'Overview'>;
+type OverviewScreenNavigationProps = StackNavigationProp<
+  RootStackParamList,
+  'Overview'
+>;
 
 export default function Overview() {
   const navigation = useNavigation<OverviewScreenNavigationProps>();
 
   return (
     <View style={styles.container}>
-      <ScreenContent path="screens/overview.tsx" title="Overview" />
+      <ScreenContent
+        path="features/screens/overview.tsx"
+        title="Overview"
+      />
       <Button
-        onPress={() =>
-          navigation.navigate('Details', {
-            name: 'Dan',
-          })
-        }
+        onPress={() => navigation.navigate('Details', { id })}
         title="Show Details"
       />
     </View>
