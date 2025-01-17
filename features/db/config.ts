@@ -5,10 +5,9 @@ import { importDatabaseFromAssetAsync, openDatabaseAsync } from 'expo-sqlite';
 import * as schema from './schema';
 
 export async function initDatabase() {
-  await importDatabaseFromAssetAsync(
-    'hymnal.db',
-    require('../../assets/hymnal.db'),
-  );
+  await importDatabaseFromAssetAsync('hymnal.db', {
+    assetId: require('../../assets/hymnal.db'),
+  });
   let sqlite = await openDatabaseAsync('hymnal.db');
   let db = drizzle(sqlite);
 

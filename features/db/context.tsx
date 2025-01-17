@@ -59,12 +59,6 @@ export type Hymn = InferSelectModel<typeof schema.hymns>;
 export type Category = InferSelectModel<typeof schema.categories>;
 export type Settings = InferSelectModel<typeof schema.settings>;
 
-function use_db(): Database['db'] {
-  const db = React.useContext(DatabaseContext);
-  invariant(db, '[use_db] must be used within a DatabaseProvider');
-  return db.db;
-}
-
 function use_prepared(): Database['prepared'] {
   const db = React.useContext(DatabaseContext);
   invariant(db, '[use_prepared] must be used within a DatabaseProvider');
