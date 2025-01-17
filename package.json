@@ -2,33 +2,41 @@
   "name": "hymnal",
   "version": "1.0.0",
   "scripts": {
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "android": "DARK_MODE=media expo start --android",
+    "ios": "DARK_MODE=media expo start --ios",
     "start": "expo start",
     "prebuild": "expo prebuild",
     "lint": "eslint \"**/*.{js,jsx,ts,tsx}\" && prettier -c \"**/*.{js,jsx,ts,tsx,json}\"",
     "format": "eslint \"**/*.{js,jsx,ts,tsx}\" --fix && prettier \"**/*.{js,jsx,ts,tsx,json}\" --write",
-    "web": "expo start --web"
+    "web": "DARK_MODE=media expo start --web"
   },
   "dependencies": {
     "@expo/vector-icons": "^14.0.4",
+    "@gluestack-ui/icon": "^0.1.25",
+    "@gluestack-ui/nativewind-utils": "^1.0.26",
+    "@gluestack-ui/overlay": "^0.1.16",
+    "@gluestack-ui/toast": "^1.0.8",
     "@react-navigation/native": "^7.0.14",
     "@react-navigation/stack": "^7.1.1",
+    "babel-plugin-module-resolver": "^5.0.2",
     "expo": "^52.0.25",
     "expo-status-bar": "~2.0.1",
-    "nativewind": "latest",
+    "nativewind": "^4.1.23",
     "react": "18.3.1",
     "react-native": "0.76.6",
+    "react-native-css-interop": "^0.1.22",
     "react-native-gesture-handler": "~2.22.0",
     "react-native-reanimated": "3.16.2",
-    "react-native-safe-area-context": "4.12.0",
-    "react-native-screens": "~4.5.0"
+    "react-native-safe-area-context": "5.1.0",
+    "react-native-screens": "~4.5.0",
+    "react-native-svg": "15.2.0"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
     "@cvr/config": "^0.4.0",
     "@types/react": "~18.3.12",
     "eslint": "^9.18.0",
+    "jscodeshift": "0.15.2",
     "prettier": "^3.4.2",
     "tailwindcss": "^3.4.17",
     "typescript": "~5.7.3"
