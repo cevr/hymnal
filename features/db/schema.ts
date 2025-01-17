@@ -22,7 +22,7 @@ export const categories = sqliteTable('categories', {
 
 export const settings = sqliteTable('settings', {
   id: integer('id').primaryKey().notNull(),
-  fontSize: integer('font_size').notNull().default(16),
-  lineHeight: integer('line_height').notNull().default(1.5),
-  fontFamily: text('font_family').notNull().default('System'),
+  font_size: integer('font_size').notNull().default(16),
+  line_height: integer('line_height').notNull().default(1.5),
+  font_family: text('font_family').notNull().default('System'),
 });

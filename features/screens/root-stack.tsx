@@ -1,31 +1,38 @@
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 
-import { BackButton } from '../ui/BackButton';
-import Details from './details';
-import Overview from './overview';
+import { HymnScreen } from './hymn/hymn';
+import { HymnsScreen } from './hymns/hymns';
 
 export type RootStackParamList = {
   Hymns: undefined;
-  Hymn: { id: string };
+  Hymn: { id: number };
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
 
+declare global {
+  namespace ReactNavigation {
+    interface RootParamList extends RootStackParamList {}
+  }
+}
+
 export default function RootStack() {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Hymns">
+      <Stack.Navigator
+        initialRouteName="Hymns"
+        screenOptions={{
+          headerShown: false,
+        }}
+      >
         <Stack.Screen
           name="Hymns"
-          component={Overview}
+          component={HymnsScreen}
         />
         <Stack.Screen
           name="Hymn"
-          component={Details}
-          options={({ navigation }) => ({
-            headerLeft: () => <BackButton onPress={navigation.goBack} />,
-          })}
+          component={HymnScreen}
         />
       </Stack.Navigator>
     </NavigationContainer>
