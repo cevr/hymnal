@@ -3,7 +3,7 @@
     "name": "hymnal",
     "slug": "hymnal",
     "version": "1.0.0",
-
+    "newArchEnabled": true,
     "web": {
       "favicon": "./assets/favicon.png"
     },
