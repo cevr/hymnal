@@ -11,49 +11,6 @@ export async function initDatabase() {
   let sqlite = await openDatabaseAsync('hymnal.db');
   let db = drizzle(sqlite);
 
-  await sqlite.execAsync(`CREATE TABLE IF NOT EXISTS hymns (
-    id INTEGER PRIMARY KEY NOT NULL,
-    name TEXT NOT NULL,
-    verses TEXT NOT NULL,
-    category TEXT NOT NULL,
-    category_id INTEGER NOT NULL,
-    favorite INTEGER NOT NULL DEFAULT 0,
-    views INTEGER NOT NULL DEFAULT 0
-  )`);
-  await sqlite.execAsync(`CREATE TABLE IF NOT EXISTS categories (
-    id INTEGER PRIMARY KEY NOT NULL,
-    name TEXT NOT NULL
-  )`);
-  await sqlite.execAsync(`CREATE TABLE IF NOT EXISTS settings (
-    id INTEGER PRIMARY KEY NOT NULL,
-    font_size INTEGER NOT NULL DEFAULT 16,
-    line_height REAL NOT NULL DEFAULT 1.5,
-    font_family TEXT NOT NULL DEFAULT 'System'
-  )`);
-
-  // Create indexes
-  await sqlite.execAsync(
-    'CREATE INDEX IF NOT EXISTS idx_hymns_name ON hymns(name)',
-  );
-  await sqlite.execAsync(
-    'CREATE INDEX IF NOT EXISTS idx_hymns_category_id ON hymns(category_id)',
-  );
-  await sqlite.execAsync(
-    'CREATE INDEX IF NOT EXISTS idx_hymns_favorite ON hymns(favorite)',
-  );
-  await sqlite.execAsync(
-    'CREATE INDEX IF NOT EXISTS idx_hymns_views ON hymns(views)',
-  );
-  await sqlite.execAsync(
-    'CREATE INDEX IF NOT EXISTS idx_categories_name ON categories(name)',
-  );
-
-  // Insert default settings if not exist
-  await sqlite.execAsync(`
-        INSERT OR IGNORE INTO settings (id, font_size, line_height, font_family)
-        VALUES (1, 16, 1.5, 'System')
-      `);
-
   const prepared = {
     get_all_hymns: db.select().from(schema.hymns).prepare(),
     get_hymn_by_id: db

@@ -16,10 +16,7 @@ import {
   View,
 } from 'react-native';
 
-type RootStackParamList = {
-  Hymns: undefined;
-  Hymn: { hymn_id: number };
-};
+import { RootStackParamList } from './root-stack';
 
 type HymnsScreenNavigationProp = StackNavigationProp<
   RootStackParamList,
@@ -83,7 +80,7 @@ export function HymnsScreen({
         renderItem={({ item }) => (
           <HymnListItem
             hymn={item}
-            on_press={() => navigation.navigate('Hymn', { hymn_id: item.id })}
+            on_press={() => navigation.navigate('Hymn', { id: item.id })}
             on_favorite_toggle={() => handle_favorite_toggle(item.id)}
           />
         )}

@@ -1,8 +1,11 @@
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
+import * as React from 'react';
+import { ErrorBoundary } from 'react-error-boundary';
+import { Text, View } from 'react-native';
 
-import { HymnScreen } from './hymn/hymn';
-import { HymnsScreen } from './hymns/hymns';
+import { HymnScreen } from './hymn';
+import { HymnsScreen } from './hymns';
 
 export type RootStackParamList = {
   Hymns: undefined;
@@ -33,6 +36,19 @@ export default function RootStack() {
         <Stack.Screen
           name="Hymn"
           component={HymnScreen}
+          layout={({ children }) => (
+            <ErrorBoundary fallback={<Text>Something went wrong.</Text>}>
+              <React.Suspense
+                fallback={
+                  <View>
+                    <Text>Loading…</Text>
+                  </View>
+                }
+              >
+                {children}
+              </React.Suspense>
+            </ErrorBoundary>
+          )}
         />
       </Stack.Navigator>
     </NavigationContainer>

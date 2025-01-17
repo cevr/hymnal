@@ -18,8 +18,8 @@ import {
   use_toggle_hymn_favorite,
   use_update_hymn_views,
   use_update_settings,
-} from '../../db/context';
-import { RootStackParamList } from '../root-stack';
+} from '../db/context';
+import { RootStackParamList } from './root-stack';
 
 type HymnScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Hymn'>;
 type HymnScreenRouteProp = RouteProp<RootStackParamList, 'Hymn'>;
@@ -34,6 +34,7 @@ export function HymnScreen({
   navigation,
 }: HymnScreenProps): React.ReactElement {
   const { id } = route.params;
+  console.log(id)
   const hymn = use_hymn(id);
   const font_settings = use_settings();
   const handle_font_settings_change = use_update_settings();
