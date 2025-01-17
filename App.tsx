@@ -1,6 +1,6 @@
 import '@/global.css';
 
-import { GluestackUIProvider } from '@/features/ui/styles';
+import { GluestackUIProvider } from '@/features/ui/gluestack-ui-provider';
 import * as React from 'react';
 
 import 'react-native-gesture-handler';

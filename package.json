@@ -2,19 +2,23 @@
   "name": "hymnal",
   "version": "1.0.0",
   "scripts": {
-    "android": "DARK_MODE=media expo start --android",
-    "ios": "DARK_MODE=media expo start --ios",
+    "android": "DARK_MODE=media DARK_MODE=media expo start --android",
+    "ios": "DARK_MODE=media DARK_MODE=media expo start --ios",
     "start": "expo start",
     "prebuild": "expo prebuild",
     "lint": "eslint \"**/*.{js,jsx,ts,tsx}\" && prettier -c \"**/*.{js,jsx,ts,tsx,json}\"",
     "format": "eslint \"**/*.{js,jsx,ts,tsx}\" --fix && prettier \"**/*.{js,jsx,ts,tsx,json}\" --write",
-    "web": "DARK_MODE=media expo start --web"
+    "web": "DARK_MODE=media DARK_MODE=media expo start --web"
   },
   "dependencies": {
+    "@expo/html-elements": "0.4.2",
     "@expo/vector-icons": "^14.0.4",
+    "@gluestack-ui/button": "^1.0.8",
     "@gluestack-ui/icon": "^0.1.25",
     "@gluestack-ui/nativewind-utils": "^1.0.26",
     "@gluestack-ui/overlay": "^0.1.16",
+    "@gluestack-ui/pressable": "^0.1.17",
+    "@gluestack-ui/slider": "^0.1.26",
     "@gluestack-ui/toast": "^1.0.8",
     "@react-native-community/slider": "^4.5.5",
     "@react-navigation/native": "^7.0.14",
@@ -34,9 +38,9 @@
     "react-native-css-interop": "^0.1.22",
     "react-native-gesture-handler": "~2.20.2",
     "react-native-reanimated": "3.16.2",
-    "react-native-safe-area-context": "4.12.0",
+    "react-native-safe-area-context": "5.1.0",
     "react-native-screens": "~4.4.0",
-    "react-native-svg": "15.8.0"
+    "react-native-svg": "15.2.0"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

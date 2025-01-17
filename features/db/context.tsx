@@ -75,9 +75,9 @@ export function use_update_hymn_views() {
   const prepared = use_prepared();
   const client = use_db_client();
   return async (id: number) => {
-    await client.mutate(['hymn', id], async () => {
-      await prepared.update_hymn_views.execute({ id });
-    });
+    await prepared.update_hymn_views.execute({ id });
+    client.invalidate('hymns');
+    client.invalidate('hymn', id);
   };
 }
 
@@ -85,9 +85,9 @@ export function use_toggle_hymn_favorite(): (id: number) => Promise<void> {
   const prepared = use_prepared();
   const client = use_db_client();
   return async (id) => {
-    await client.mutate(['hymn', id], async () => {
-      await prepared.toggle_hymn_favorite.execute({ id });
-    });
+    await prepared.toggle_hymn_favorite.execute({ id });
+    client.invalidate('hymns');
+    client.invalidate('hymn', id);
   };
 }
 
