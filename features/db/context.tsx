@@ -1,3 +1,12 @@
+import {
+  QueryClient,
+  QueryClientProvider,
+  queryOptions,
+  useMutation,
+  useQuery,
+  useQueryClient,
+  useSuspenseQuery,
+} from '@tanstack/react-query';
 import { eq, InferSelectModel, sql } from 'drizzle-orm';
 import { cache, cacheResource } from 'pausa';
 import * as React from 'react';
@@ -7,58 +16,76 @@ import { initDatabase } from './config';
 import * as schema from './schema';
 
 type Database = Awaited<ReturnType<typeof initDatabase>>;
-type DatabaseClient = ReturnType<typeof makeDbClient>;
+type DatabaseQueryOptions = ReturnType<typeof makeOptions>;
 
 const DatabaseContext = React.createContext<Database | null>(null);
-const DatabaseClientContext = React.createContext<DatabaseClient | null>(null);
+const DatabaseQueryOptionsContext =
+  React.createContext<DatabaseQueryOptions | null>(null);
+
+const makeOptions = (client: QueryClient, database: Database) => {
+  const options = {
+    hymns: queryOptions({
+      queryKey: ['hymns'],
+      queryFn: () => database.db.select().from(schema.hymns),
+    }),
+    hymn: (id: number) =>
+      queryOptions({
+        queryKey: ['hymn', id],
+        queryFn: async () => {
+          const res = await database.db
+            .select()
+            .from(schema.hymns)
+            .where(eq(schema.hymns.id, id));
+          return res[0];
+        },
+      }),
+
+    categories: queryOptions({
+      queryKey: ['categories'],
+      queryFn: () => database.db.select().from(schema.categories),
+    }),
+
+    settings: queryOptions({
+      queryKey: ['settings'],
+      queryFn: async () => {
+        const res = await database.db
+          .select()
+          .from(schema.settings)
+          .where(eq(schema.settings.id, 1));
+        return res[0];
+      },
+    }),
+  };
+
+  client.prefetchQuery(options.hymns);
+  client.prefetchQuery(options.categories);
+  client.prefetchQuery(options.settings);
+
+  return options;
+};
 
 export function DatabaseProvider({
   children,
 }: {
   children: React.ReactNode;
 }): React.ReactNode {
-  const db = dbCache.use();
-  const [client] = React.useState<ReturnType<typeof makeDbClient>>(() =>
-    makeDbClient(db),
-  );
+  const client = useQueryClient();
+  const { data } = useSuspenseQuery({
+    queryKey: ['database'],
+    queryFn: initDatabase,
+    staleTime: Infinity,
+  });
+
+  const [options] = React.useState(() => makeOptions(client, data));
 
   return (
-    <DatabaseContext.Provider value={db}>
-      <DatabaseClientContext.Provider value={client}>
+    <DatabaseContext.Provider value={data}>
+      <DatabaseQueryOptionsContext.Provider value={options}>
         {children}
-      </DatabaseClientContext.Provider>
+      </DatabaseQueryOptionsContext.Provider>
     </DatabaseContext.Provider>
   );
 }
-
-const dbCache = cache(async () => await initDatabase());
-
-const makeDbClient = ({ db, prepared }: Database) => {
-  const client = cacheResource({
-    hymns: async () => {
-      return await db.select().from(schema.hymns);
-    },
-    hymn: async (_, id: number) => {
-      const res = await db
-        .select()
-        .from(schema.hymns)
-        .where(eq(schema.hymns.id, id));
-      return res[0];
-    },
-    categories: async () => await db.select().from(schema.categories),
-    settings: async () => {
-      const res = await db
-        .select()
-        .from(schema.settings)
-        .where(eq(schema.settings.id, 1));
-      return res[0];
-    },
-  });
-  client.preload('hymns');
-  client.preload('categories');
-  client.preload('settings');
-  return client;
-};
 
 export type Hymn = InferSelectModel<typeof schema.hymns>;
 export type Category = InferSelectModel<typeof schema.categories>;
@@ -76,28 +103,30 @@ function useDb(): Database['db'] {
   return db.db;
 }
 
-function useDbClient(): ReturnType<typeof makeDbClient> {
-  const client = React.useContext(DatabaseClientContext);
+function useDbOptions(): DatabaseQueryOptions {
+  const client = React.useContext(DatabaseQueryOptionsContext);
   invariant(client, '[use_db_client] must be used within a DatabaseProvider');
   return client;
 }
 
 export function useUpdateHymnViews() {
   const db = useDb();
-  const client = useDbClient();
+  const client = useQueryClient();
+  const options = useDbOptions();
   return async (id: number) => {
     await db
       .update(schema.hymns)
       .set({ views: sql`${schema.hymns.views} + 1` })
       .where(eq(schema.hymns.id, id));
-    client.invalidate('hymns');
-    client.invalidate('hymn', id);
+    client.invalidateQueries(options.hymn(id));
+    client.invalidateQueries(options.hymns);
   };
 }
 
 export function useToggleHymnFavorite(): (id: number) => Promise<void> {
   const db = useDb();
-  const client = useDbClient();
+  const client = useQueryClient();
+  const options = useDbOptions();
   return async (id) => {
     await db
       .update(schema.hymns)
@@ -105,8 +134,8 @@ export function useToggleHymnFavorite(): (id: number) => Promise<void> {
         favorite: sql`NOT ${schema.hymns.favorite}`,
       })
       .where(eq(schema.hymns.id, id));
-    client.invalidate('hymns');
-    client.invalidate('hymn', id);
+    client.invalidateQueries(options.hymn(id));
+    client.invalidateQueries(options.hymns);
   };
 }
 
@@ -114,34 +143,37 @@ export function useUpdateSettings(): (
   new_settings: Partial<Settings>,
 ) => Promise<void> {
   const db = useDb();
-  const client = useDbClient();
+  const client = useQueryClient();
+  const options = useDbOptions();
   return async (new_settings) => {
-    await client.mutate(['settings'], async () => {
-      await db
-        .update(schema.settings)
-        .set(new_settings)
-        .where(eq(schema.settings.id, 1));
+    await db
+      .update(schema.settings)
+      .set(new_settings)
+      .where(eq(schema.settings.id, 1));
+    client.setQueryData(options.settings.queryKey, (old) => {
+      if (!old) return old;
+      return { ...old, ...new_settings };
     });
+    client.invalidateQueries(options.settings);
   };
 }
 
 export function useHymns(): Hymn[] {
-  const client = useDbClient();
-  return client.use('hymns');
+  const options = useDbOptions();
+  return useSuspenseQuery(options.hymns).data;
 }
 
 export function useHymn(id: number): Hymn {
-  const client = useDbClient();
-  const hymn = client.use('hymn', id);
-  return hymn;
+  const options = useDbOptions();
+  return useSuspenseQuery(options.hymn(id)).data;
 }
 
 export function useCategories(): Category[] {
-  const client = useDbClient();
-  return client.use('categories');
+  const options = useDbOptions();
+  return useSuspenseQuery(options.categories).data;
 }
 
 export function useSettings(): Settings {
-  const client = useDbClient();
-  return client.use('settings');
+  const options = useDbOptions();
+  return useSuspenseQuery(options.settings).data;
 }

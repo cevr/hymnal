@@ -5,6 +5,13 @@ import 'expo-dev-client';
 
 import { ThemeProvider as NavThemeProvider } from '@react-navigation/native';
 import { PortalHost } from '@rn-primitives/portal';
+import {
+  QueryClient,
+  QueryClientProvider,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 
@@ -20,6 +27,8 @@ export {
   ErrorBoundary,
 } from 'expo-router';
 
+const queryClient = new QueryClient();
+
 export default function RootLayout() {
   useInitialAndroidBarSync();
   const { colorScheme, isDarkColorScheme } = useColorScheme();
@@ -32,10 +41,12 @@ export default function RootLayout() {
       />
 
       <NavThemeProvider value={NAV_THEME[colorScheme]}>
-        <DatabaseProvider>
-          <Stack />
-          <PortalHost />
-        </DatabaseProvider>
+        <QueryClientProvider client={queryClient}>
+          <DatabaseProvider>
+            <Stack />
+            <PortalHost />
+          </DatabaseProvider>
+        </QueryClientProvider>
       </NavThemeProvider>
     </>
   );

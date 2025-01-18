@@ -99,7 +99,7 @@ export default function HymnsScreen(): React.ReactElement {
           ref: searchBarRef,
           iosCancelButtonText: 'Abort',
           onChangeText: (text) => {
-            console.log(text);
+            set_search_query(text);
           },
           materialRightView() {
             return (
@@ -133,18 +133,14 @@ export default function HymnsScreen(): React.ReactElement {
           ),
         }}
       />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        contentContainerClassName="flex-1 py-10 px-4 gap-12"
-      >
-        <List
-          variant="insets"
-          data={list_data as any}
-          estimatedItemSize={ESTIMATED_ITEM_HEIGHT.withSubTitle}
-          renderItem={HymnItem}
-          keyExtractor={(item) => item.id.toString()}
-        />
-      </ScrollView>
+
+      <List
+        variant="insets"
+        data={list_data as any}
+        estimatedItemSize={ESTIMATED_ITEM_HEIGHT.withSubTitle}
+        renderItem={HymnItem}
+        keyExtractor={(item) => item.id.toString()}
+      />
     </>
   );
 }

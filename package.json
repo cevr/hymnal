@@ -22,6 +22,7 @@
     "@rn-primitives/slot": "^1.1.0",
     "@roninoss/icons": "^0.0.4",
     "@shopify/flash-list": "1.7.1",
+    "@tanstack/react-query": "^5.64.1",
     "babel-plugin-module-resolver": "^5.0.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
