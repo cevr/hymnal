@@ -42,13 +42,11 @@ export default function HymnsScreen(): React.ReactElement {
     return matches_search && matches_favorite;
   });
 
-  const category_map = categories.reduce(
-    (acc, category) => {
-      acc[category.id] = 0;
-      return acc;
-    },
-    {} as Record<string, number>,
-  );
+  const category_map = categories.reduce((acc, category) => {
+    console.log('category', category);
+    acc[category.id] = 0;
+    return acc;
+  }, [] as number[]);
   const hymnFavoriteToggle = useToggleHymnFavorite();
 
   const list_data = filtered_hymns.reduce(
@@ -90,11 +88,12 @@ export default function HymnsScreen(): React.ReactElement {
           <Button
             variant="plain"
             size="icon"
+            onPress={() => set_show_favorites(!show_favorites)}
           >
             <Icon
-              size={24}
-              name="account-circle-outline"
-              color={colors.foreground}
+              size={32}
+              name={show_favorites ? 'heart' : 'heart-outline'}
+              color={show_favorites ? '#EF4444' : '#6B7280'}
             />
           </Button>
         )}
@@ -123,17 +122,17 @@ export default function HymnsScreen(): React.ReactElement {
               </Animated.View>
             );
           },
-          content: (
-            <KeyboardAwareScrollView
-              className="ios:bg-background/95"
-              contentContainerClassName="flex-1"
-              keyboardShouldPersistTaps="always"
-            >
-              <View className="flex-1 items-center justify-center">
-                <Text>Search bar content</Text>
-              </View>
-            </KeyboardAwareScrollView>
-          ),
+          // content: (
+          //   <KeyboardAwareScrollView
+          //     className="ios:bg-background/95"
+          //     contentContainerClassName="flex-1"
+          //     keyboardShouldPersistTaps="always"
+          //   >
+          //     <View className="flex-1 items-center justify-center">
+          //       <Text>Search bar content</Text>
+          //     </View>
+          //   </KeyboardAwareScrollView>
+          // ),
         }}
       />
 
@@ -142,9 +141,20 @@ export default function HymnsScreen(): React.ReactElement {
         data={list_data as any}
         estimatedItemSize={ESTIMATED_ITEM_HEIGHT.withSubTitle}
         renderItem={renderItem}
-        keyExtractor={(item) => item.id.toString()}
+        ListEmptyComponent={ListEmptyComponent}
+        keyExtractor={(item) =>
+          typeof item === 'string' ? item : item.id.toString()
+        }
       />
     </>
+  );
+}
+
+function ListEmptyComponent() {
+  return (
+    <View className="flex-1 items-center justify-center">
+      <Text className="text-lg">No hymns found</Text>
+    </View>
   );
 }
 
@@ -167,6 +177,7 @@ function renderItem(
           variant="plain"
           size="icon"
           onPress={info.item.onHymnFavoriteToggle}
+          className="pr-4"
         >
           <Icon
             size={32}

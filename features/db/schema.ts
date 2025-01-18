@@ -16,7 +16,7 @@ export const hymns = sqliteTable('hymns', {
 });
 
 export const categories = sqliteTable('categories', {
-  id: integer('number').notNull(),
+  id: integer('id').notNull(),
   name: text('name').notNull(),
 });
 
