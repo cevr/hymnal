@@ -82,7 +82,7 @@ export default function HymnScreen(): React.ReactElement {
             >
               <Text
                 className="font-semibold"
-                variant="caption2"
+                variant="subhead"
               >
                 {lyric.id === -1 ? 'Refrain' : `Verse ${lyric.id + 1}`}
               </Text>
