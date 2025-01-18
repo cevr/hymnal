@@ -7,6 +7,7 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
+    "scheme": "hymnal",
     "experiments": {
       "tsconfigPaths": true
     },
@@ -26,12 +27,22 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.cev.hymnal"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
+      },
+      "package": "com.cev.hymnal"
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "4b0e5c37-992f-499f-a148-7f5ee25afd59"
       }
     }
   }

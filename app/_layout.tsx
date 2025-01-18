@@ -4,15 +4,16 @@ import '../global.css';
 import 'expo-dev-client';
 
 import { ThemeProvider as NavThemeProvider } from '@react-navigation/native';
+import { PortalHost } from '@rn-primitives/portal';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 
 import { DatabaseProvider } from '~/features/db/context';
-import { NAV_THEME } from '~/lib/theme';
 import {
   useColorScheme,
   useInitialAndroidBarSync,
 } from '~/lib/use-color-scheme';
+import { NAV_THEME } from '~/theme';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -33,6 +34,7 @@ export default function RootLayout() {
       <NavThemeProvider value={NAV_THEME[colorScheme]}>
         <DatabaseProvider>
           <Stack />
+          <PortalHost />
         </DatabaseProvider>
       </NavThemeProvider>
     </>

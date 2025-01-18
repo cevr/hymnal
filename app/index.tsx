@@ -1,210 +1,183 @@
+import { Icon } from '@roninoss/icons';
+import { router } from 'expo-router';
+import React, { useState } from 'react';
+import { ScrollView, View } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
+import Animated, { FadeIn, ZoomOut } from 'react-native-reanimated';
+
+import { AdaptiveSearchHeader } from '~/components/nativewindui/adaptive-search-header';
+import { AdaptiveSearchBarRef } from '~/components/nativewindui/adaptive-search-header/types';
+import { Button } from '~/components/nativewindui/button';
+import {
+  ESTIMATED_ITEM_HEIGHT,
+  List,
+  ListItem,
+  ListRenderItemInfo,
+  ListSectionHeader,
+} from '~/components/nativewindui/list';
+import { Text } from '~/components/nativewindui/text';
 import {
   Hymn,
   useCategories,
   useHymns,
   useToggleHymnFavorite,
-} from '@/features/db/context';
-import { StackNavigationProp } from '@react-navigation/stack';
-import { Link } from 'expo-router';
-import { Heart, Search, SortAsc } from 'lucide-react-native';
-import React, { useEffect, useState } from 'react';
-import {
-  FlatList,
-  ScrollView,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+} from '~/features/db/context';
+import { useColorScheme } from '~/lib/use-color-scheme';
 
 export default function HymnsScreen(): React.ReactElement {
+  const { colors } = useColorScheme();
+  const searchBarRef = React.useRef<AdaptiveSearchBarRef>(null);
   const hymns = useHymns();
   const categories = useCategories();
-  const handle_favorite_toggle = useToggleHymnFavorite();
   const [search_query, set_search_query] = useState<string>('');
-  const [selected_category, set_selected_category] = useState<string>('All');
-  const [order_by, set_order_by] = useState<'number' | 'name' | 'views'>(
-    'number',
-  );
+
   const [show_favorites, set_show_favorites] = useState<boolean>(false);
 
   const filtered_hymns: Hymn[] = hymns.filter((hymn) => {
     const matches_search: boolean =
       hymn.name.toLowerCase().includes(search_query.toLowerCase()) ||
       hymn.id.toString().includes(search_query);
-    const matches_category: boolean =
-      selected_category === 'All' ||
-      categories.find((c) => c.id === hymn.category_id)?.name ===
-        selected_category;
     const matches_favorite: boolean = !show_favorites || hymn.favorite === 1;
 
-    return matches_search && matches_category && matches_favorite;
+    return matches_search && matches_favorite;
   });
 
-  const sorted_hymns: Hymn[] = filtered_hymns.sort((a, b) => {
-    if (order_by === 'number') return a.id - b.id;
-    if (order_by === 'name') return a.name.localeCompare(b.name);
-    return b.views - a.views;
-  });
-
-  return (
-    <View className="flex-1 bg-white">
-      <View className="sticky top-0 z-10 bg-white">
-        <SearchBar
-          value={search_query}
-          on_change_text={set_search_query}
-          on_order_change={set_order_by}
-          on_favorites_toggle={() => set_show_favorites(!show_favorites)}
-          show_favorites={show_favorites}
-          order_by={order_by}
-          categories={['All', ...categories.map((c) => c.name)]}
-          selected_category={selected_category}
-          on_category_change={set_selected_category}
-        />
-      </View>
-      <FlatList
-        data={sorted_hymns}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => (
-          <HymnListItem
-            hymn={item}
-            on_favorite_toggle={() => handle_favorite_toggle(item.id)}
-          />
-        )}
-      />
-    </View>
+  const category_map = categories.reduce(
+    (acc, category) => {
+      acc[category.id] = 0;
+      return acc;
+    },
+    {} as Record<string, number>,
   );
-}
 
-type SearchBarProps = {
-  value: string;
-  on_change_text: (text: string) => void;
-  on_order_change: (order: 'number' | 'name' | 'views') => void;
-  on_favorites_toggle: () => void;
-  show_favorites: boolean;
-  order_by: 'number' | 'name' | 'views';
-  categories: string[];
-  selected_category: string;
-  on_category_change: (category: string) => void;
-};
+  const list_data = filtered_hymns.reduce(
+    (acc, hymn) => {
+      const categoryCount = category_map[hymn.category_id];
+      if (categoryCount === 0) {
+        acc.push(hymn.category);
+      }
+      acc.push({
+        id: hymn.id,
+        title: hymn.name,
+        subtitle: `#${hymn.id}`,
+        hymn,
+      });
+      category_map[hymn.category_id]++;
 
-export function SearchBar({
-  value,
-  on_change_text,
-  on_order_change,
-  on_favorites_toggle,
-  show_favorites,
-  order_by,
-  categories,
-  selected_category,
-  on_category_change,
-}: SearchBarProps): React.ReactElement {
+      return acc;
+    },
+    [] as (
+      | {
+          hymn: Hymn;
+          id: number;
+          title: string;
+          subtitle: string;
+        }
+      | string
+    )[],
+  );
+
   return (
-    <View className="gap-2 p-4">
-      <View className="flex-row items-center rounded-full bg-gray-100 px-4 py-2">
-        <Search
-          size={20}
-          color="#6B7280"
-        />
-        <TextInput
-          className="ml-2 flex-1 text-base"
-          placeholder="Search hymns..."
-          value={value}
-          onChangeText={on_change_text}
-        />
-      </View>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        className="flex-row"
-      >
-        {categories.map((category) => (
-          <TouchableOpacity
-            key={category}
-            onPress={() => on_category_change(category)}
-            className={`mr-2 rounded-full px-3 py-1 ${
-              category === selected_category ? 'bg-black' : 'bg-gray-200'
-            }`}
+    <>
+      <AdaptiveSearchHeader
+        iosTitle="Title"
+        iosIsLargeTitle={false}
+        shadowVisible={false}
+        rightView={() => (
+          <Button
+            variant="plain"
+            size="icon"
           >
-            <Text
-              className={`${
-                category === selected_category ? 'text-white' : 'text-black'
-              }`}
+            <Icon
+              size={24}
+              name="account-circle-outline"
+              color={colors.foreground}
+            />
+          </Button>
+        )}
+        searchBar={{
+          ref: searchBarRef,
+          iosCancelButtonText: 'Abort',
+          onChangeText: (text) => {
+            console.log(text);
+          },
+          materialRightView() {
+            return (
+              <Animated.View
+                entering={FadeIn}
+                exiting={ZoomOut}
+              >
+                <Button
+                  variant="plain"
+                  size="icon"
+                >
+                  <Icon
+                    size={24}
+                    name="cog-outline"
+                    color={colors.foreground}
+                  />
+                </Button>
+              </Animated.View>
+            );
+          },
+          content: (
+            <KeyboardAwareScrollView
+              className="ios:bg-background/95"
+              contentContainerClassName="flex-1"
+              keyboardShouldPersistTaps="always"
             >
-              {category}
-            </Text>
-          </TouchableOpacity>
-        ))}
+              <View className="flex-1 items-center justify-center">
+                <Text>Search bar content</Text>
+              </View>
+            </KeyboardAwareScrollView>
+          ),
+        }}
+      />
+      <ScrollView
+        contentInsetAdjustmentBehavior="automatic"
+        contentContainerClassName="flex-1 py-10 px-4 gap-12"
+      >
+        <List
+          variant="insets"
+          data={list_data as any}
+          estimatedItemSize={ESTIMATED_ITEM_HEIGHT.withSubTitle}
+          renderItem={HymnItem}
+          keyExtractor={(item) => item.id.toString()}
+        />
       </ScrollView>
-      <View className="flex-row justify-between">
-        <TouchableOpacity
-          onPress={() =>
-            on_order_change(
-              order_by === 'number'
-                ? 'name'
-                : order_by === 'name'
-                  ? 'views'
-                  : 'number',
-            )
-          }
-          className="flex-row items-center"
-        >
-          <SortAsc
-            size={20}
-            color="#6B7280"
-          />
-          <Text className="ml-2 text-gray-600">
-            {order_by === 'number'
-              ? 'Number'
-              : order_by === 'name'
-                ? 'Name'
-                : 'Views'}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={on_favorites_toggle}
-          className="flex-row items-center"
-        >
-          <Heart
-            size={20}
-            color={show_favorites ? '#EF4444' : '#6B7280'}
-            fill={show_favorites ? '#EF4444' : 'none'}
-          />
-          <Text className="ml-2 text-gray-600">Favorites</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+    </>
   );
 }
 
-type HymnListItemProps = {
-  hymn: Hymn;
-  on_favorite_toggle: () => void;
-};
-
-export function HymnListItem({
-  hymn,
-  on_favorite_toggle,
-}: HymnListItemProps): React.ReactElement {
+function HymnItem(
+  info: ListRenderItemInfo<{
+    hymn: Hymn;
+    id: number;
+    title: string;
+    subtitle: string;
+  }>,
+) {
+  const handle_favorite_toggle = useToggleHymnFavorite();
+  if (typeof info.item === 'string') {
+    return <ListSectionHeader {...info} />;
+  }
   return (
-    <Link
-      href={`/hymns/${hymn.id}`}
-      className="flex-row items-center justify-between border-b border-gray-200 p-4"
-    >
-      <View className="flex-1">
-        <Text className="text-lg font-semibold">{hymn.name}</Text>
-        <Text className="text-sm text-gray-600">#{hymn.id}</Text>
-      </View>
-      <TouchableOpacity
-        onPress={on_favorite_toggle}
-        className="p-2"
-      >
-        <Heart
-          size={24}
-          color={hymn.favorite === 1 ? '#EF4444' : '#6B7280'}
-          fill={hymn.favorite === 1 ? '#EF4444' : 'none'}
-        />
-      </TouchableOpacity>
-    </Link>
+    <ListItem
+      rightView={
+        <Button
+          variant="plain"
+          size="icon"
+          onPress={() => handle_favorite_toggle(info.item.hymn.id)}
+        >
+          <Icon
+            size={24}
+            name="heart-outline"
+            color={info.item.hymn.favorite === 1 ? '#EF4444' : '#6B7280'}
+          />
+        </Button>
+      }
+      {...info}
+      onPress={() => router.push(`/hymns/${info.item.hymn.id}`)}
+    />
   );
 }
