@@ -49,6 +49,7 @@ export default function HymnsScreen(): React.ReactElement {
     },
     {} as Record<string, number>,
   );
+  const hymnFavoriteToggle = useToggleHymnFavorite();
 
   const list_data = filtered_hymns.reduce(
     (acc, hymn) => {
@@ -61,6 +62,7 @@ export default function HymnsScreen(): React.ReactElement {
         title: hymn.name,
         subtitle: `#${hymn.id}`,
         hymn,
+        onHymnFavoriteToggle: () => hymnFavoriteToggle(hymn.id),
       });
       category_map[hymn.category_id]++;
 
@@ -72,6 +74,7 @@ export default function HymnsScreen(): React.ReactElement {
           id: number;
           title: string;
           subtitle: string;
+          onHymnFavoriteToggle: () => void;
         }
       | string
     )[],
@@ -80,7 +83,7 @@ export default function HymnsScreen(): React.ReactElement {
   return (
     <>
       <AdaptiveSearchHeader
-        iosTitle="Title"
+        iosTitle="Hymns"
         iosIsLargeTitle={false}
         shadowVisible={false}
         rightView={() => (
@@ -97,7 +100,7 @@ export default function HymnsScreen(): React.ReactElement {
         )}
         searchBar={{
           ref: searchBarRef,
-          iosCancelButtonText: 'Abort',
+          iosCancelButtonText: 'Cancel',
           onChangeText: (text) => {
             set_search_query(text);
           },
@@ -138,22 +141,22 @@ export default function HymnsScreen(): React.ReactElement {
         variant="insets"
         data={list_data as any}
         estimatedItemSize={ESTIMATED_ITEM_HEIGHT.withSubTitle}
-        renderItem={HymnItem}
+        renderItem={renderItem}
         keyExtractor={(item) => item.id.toString()}
       />
     </>
   );
 }
 
-function HymnItem(
+function renderItem(
   info: ListRenderItemInfo<{
     hymn: Hymn;
     id: number;
     title: string;
     subtitle: string;
+    onHymnFavoriteToggle: () => void;
   }>,
 ) {
-  const handle_favorite_toggle = useToggleHymnFavorite();
   if (typeof info.item === 'string') {
     return <ListSectionHeader {...info} />;
   }
@@ -163,11 +166,11 @@ function HymnItem(
         <Button
           variant="plain"
           size="icon"
-          onPress={() => handle_favorite_toggle(info.item.hymn.id)}
+          onPress={info.item.onHymnFavoriteToggle}
         >
           <Icon
-            size={24}
-            name="heart-outline"
+            size={32}
+            name={info.item.hymn.favorite === 1 ? 'heart' : 'heart-outline'}
             color={info.item.hymn.favorite === 1 ? '#EF4444' : '#6B7280'}
           />
         </Button>
