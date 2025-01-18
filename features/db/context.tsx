@@ -1,14 +1,10 @@
 import {
   QueryClient,
-  QueryClientProvider,
   queryOptions,
-  useMutation,
-  useQuery,
   useQueryClient,
   useSuspenseQuery,
 } from '@tanstack/react-query';
 import { eq, InferSelectModel, sql } from 'drizzle-orm';
-import { cache, cacheResource } from 'pausa';
 import * as React from 'react';
 
 import { invariant } from '../utils';
@@ -128,6 +124,18 @@ export function useToggleHymnFavorite(): (id: number) => Promise<void> {
   const client = useQueryClient();
   const options = useDbOptions();
   return async (id) => {
+    client.setQueryData(options.hymn(id).queryKey, (old) => {
+      if (!old) return old;
+      return { ...old, favorite: old.favorite === 1 ? 0 : 1 };
+    });
+    client.setQueryData(options.hymns.queryKey, (old) => {
+      if (!old) return old;
+      return old.map((hymn) =>
+        hymn.id === id
+          ? { ...hymn, favorite: hymn.favorite === 1 ? 0 : 1 }
+          : hymn,
+      );
+    });
     await db
       .update(schema.hymns)
       .set({
@@ -146,14 +154,14 @@ export function useUpdateSettings(): (
   const client = useQueryClient();
   const options = useDbOptions();
   return async (new_settings) => {
-    await db
-      .update(schema.settings)
-      .set(new_settings)
-      .where(eq(schema.settings.id, 1));
     client.setQueryData(options.settings.queryKey, (old) => {
       if (!old) return old;
       return { ...old, ...new_settings };
     });
+    await db
+      .update(schema.settings)
+      .set(new_settings)
+      .where(eq(schema.settings.id, 1));
     client.invalidateQueries(options.settings);
   };
 }

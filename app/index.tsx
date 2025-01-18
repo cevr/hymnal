@@ -1,9 +1,8 @@
 import { Icon } from '@roninoss/icons';
 import { router } from 'expo-router';
-import React, { useState } from 'react';
-import { ScrollView, View } from 'react-native';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
-import Animated, { FadeIn, ZoomOut } from 'react-native-reanimated';
+import { matchSorter } from 'match-sorter';
+import * as React from 'react';
+import { View } from 'react-native';
 
 import { AdaptiveSearchHeader } from '~/components/nativewindui/adaptive-search-header';
 import { AdaptiveSearchBarRef } from '~/components/nativewindui/adaptive-search-header/types';
@@ -19,9 +18,11 @@ import { Text } from '~/components/nativewindui/text';
 import {
   Hymn,
   useCategories,
+  useHymn,
   useHymns,
   useToggleHymnFavorite,
 } from '~/features/db/context';
+import { ToggleFavoriteButton } from '~/features/hymns/toggle-favorite-button';
 import { useColorScheme } from '~/lib/use-color-scheme';
 
 export default function HymnsScreen(): React.ReactElement {
@@ -29,21 +30,18 @@ export default function HymnsScreen(): React.ReactElement {
   const searchBarRef = React.useRef<AdaptiveSearchBarRef>(null);
   const hymns = useHymns();
   const categories = useCategories();
-  const [search_query, set_search_query] = useState<string>('');
+  const [show_favorites, set_show_favorites] = React.useState<boolean>(false);
+  const [search_query, set_search_query] = React.useState<string>('');
 
-  const [show_favorites, set_show_favorites] = useState<boolean>(false);
+  const deferredSearchQuery = React.useDeferredValue(search_query);
 
-  const filtered_hymns: Hymn[] = hymns.filter((hymn) => {
-    const matches_search: boolean =
-      hymn.name.toLowerCase().includes(search_query.toLowerCase()) ||
-      hymn.id.toString().includes(search_query);
-    const matches_favorite: boolean = !show_favorites || hymn.favorite === 1;
-
-    return matches_search && matches_favorite;
+  const filtered_hymns = matchSorter(hymns, deferredSearchQuery, {
+    keys: ['id', 'name', 'category', 'verses.text'],
+  }).filter((hymn) => {
+    return !show_favorites || hymn.favorite === 1;
   });
 
   const category_map = categories.reduce((acc, category) => {
-    console.log('category', category);
     acc[category.id] = 0;
     return acc;
   }, [] as number[]);
@@ -58,9 +56,11 @@ export default function HymnsScreen(): React.ReactElement {
       acc.push({
         id: hymn.id,
         title: hymn.name,
-        subtitle: `#${hymn.id}`,
+        subTitle: `#${hymn.id}`,
         hymn,
         onHymnFavoriteToggle: () => hymnFavoriteToggle(hymn.id),
+        activeColor: colors.primary,
+        inactiveColor: colors.grey,
       });
       category_map[hymn.category_id]++;
 
@@ -71,8 +71,10 @@ export default function HymnsScreen(): React.ReactElement {
           hymn: Hymn;
           id: number;
           title: string;
-          subtitle: string;
+          subTitle: string;
           onHymnFavoriteToggle: () => void;
+          activeColor?: string;
+          inactiveColor?: string;
         }
       | string
     )[],
@@ -89,11 +91,12 @@ export default function HymnsScreen(): React.ReactElement {
             variant="plain"
             size="icon"
             onPress={() => set_show_favorites(!show_favorites)}
+            hitSlop={20}
           >
             <Icon
-              size={32}
+              size={36}
               name={show_favorites ? 'heart' : 'heart-outline'}
-              color={show_favorites ? '#EF4444' : '#6B7280'}
+              color={show_favorites ? colors.primary : colors.grey}
             />
           </Button>
         )}
@@ -103,36 +106,10 @@ export default function HymnsScreen(): React.ReactElement {
           onChangeText: (text) => {
             set_search_query(text);
           },
-          materialRightView() {
-            return (
-              <Animated.View
-                entering={FadeIn}
-                exiting={ZoomOut}
-              >
-                <Button
-                  variant="plain"
-                  size="icon"
-                >
-                  <Icon
-                    size={24}
-                    name="cog-outline"
-                    color={colors.foreground}
-                  />
-                </Button>
-              </Animated.View>
-            );
+          onBlur: () => {
+            searchBarRef.current?.cancelSearch();
           },
-          // content: (
-          //   <KeyboardAwareScrollView
-          //     className="ios:bg-background/95"
-          //     contentContainerClassName="flex-1"
-          //     keyboardShouldPersistTaps="always"
-          //   >
-          //     <View className="flex-1 items-center justify-center">
-          //       <Text>Search bar content</Text>
-          //     </View>
-          //   </KeyboardAwareScrollView>
-          // ),
+          placeholder: 'Search hymns...',
         }}
       />
 
@@ -163,8 +140,9 @@ function renderItem(
     hymn: Hymn;
     id: number;
     title: string;
-    subtitle: string;
     onHymnFavoriteToggle: () => void;
+    activeColor?: string;
+    inactiveColor?: string;
   }>,
 ) {
   if (typeof info.item === 'string') {
@@ -172,20 +150,7 @@ function renderItem(
   }
   return (
     <ListItem
-      rightView={
-        <Button
-          variant="plain"
-          size="icon"
-          onPress={info.item.onHymnFavoriteToggle}
-          className="pr-4"
-        >
-          <Icon
-            size={32}
-            name={info.item.hymn.favorite === 1 ? 'heart' : 'heart-outline'}
-            color={info.item.hymn.favorite === 1 ? '#EF4444' : '#6B7280'}
-          />
-        </Button>
-      }
+      rightView={<ToggleFavoriteButton id={info.item.id} />}
       {...info}
       onPress={() => router.push(`/hymns/${info.item.hymn.id}`)}
     />

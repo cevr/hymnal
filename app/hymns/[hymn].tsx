@@ -1,14 +1,12 @@
 import Slider from '@react-native-community/slider';
-import { router, useLocalSearchParams } from 'expo-router';
-import {
-  ArrowLeft,
-  Heart,
-  Pause,
-  Play,
-  Settings as SettingsIcon,
-} from 'lucide-react-native';
+import { Icon } from '@roninoss/icons';
+import { Stack, useLocalSearchParams } from 'expo-router';
 import React, { Suspense, useEffect, useState } from 'react';
 import { Modal, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+
+import { Button } from '~/components/nativewindui/button';
+import { ToggleFavoriteButton } from '~/features/hymns/toggle-favorite-button';
+import { useColorScheme } from '~/lib/use-color-scheme';
 
 import {
   Hymn,
@@ -19,10 +17,13 @@ import {
   useUpdateSettings,
 } from '../../features/db/context';
 
+type Lyric = { id: number; text: string };
+
 export default function HymnScreen(): React.ReactElement {
   const params = useLocalSearchParams<{
     hymn: string;
   }>();
+  const { colors } = useColorScheme();
 
   const hymn = useHymn(+params.hymn);
   const font_settings = useSettings();
@@ -33,8 +34,6 @@ export default function HymnScreen(): React.ReactElement {
   React.useEffect(() => {
     handle_view_update(hymn.id);
   }, [hymn.id]);
-
-  type Lyric = { id: number; text: string };
 
   const { refrain, verses }: { refrain: Lyric[]; verses: Lyric[] } =
     hymn.verses.reduce(
@@ -52,55 +51,74 @@ export default function HymnScreen(): React.ReactElement {
   const formatted_lyrics: Lyric[] = [verses[0], ...refrain, ...verses.slice(1)];
 
   return (
-    <View className="flex-1 bg-white">
-      <View className="flex-row items-center justify-between bg-white p-4">
-        <TouchableOpacity onPress={() => router.back()}>
-          <ArrowLeft
-            size={24}
-            color="#000"
-          />
-        </TouchableOpacity>
-        <Text className="text-lg font-bold">{hymn.name}</Text>
-        <TouchableOpacity onPress={() => set_show_font_settings(true)}>
-          <SettingsIcon
-            size={24}
-            color="#000"
-          />
-        </TouchableOpacity>
-      </View>
-      <ScrollView className="flex-1 p-4">
-        {formatted_lyrics.map((lyric, index) => (
-          <View
-            key={index}
-            className="mb-4"
-          >
-            <Text className="mb-2 font-bold">
-              {lyric.id === -1 ? 'Refrain' : `Verse ${lyric.id + 1}`}
-            </Text>
-            <Text
-              style={{
-                fontSize: font_settings.font_size,
-                lineHeight: font_settings.font_size * font_settings.line_height,
-                fontFamily: font_settings.font_family,
-              }}
+    <>
+      <Stack.Screen
+        options={{
+          title: `${hymn.id}. ${hymn.name}`,
+
+          headerTitleStyle: {
+            fontWeight: 'bold',
+            fontSize: 18,
+          },
+
+          headerRight: () => (
+            <Button
+              variant="plain"
+              onPress={() => set_show_font_settings(true)}
             >
-              {lyric.text}
-            </Text>
-          </View>
-        ))}
-      </ScrollView>
-      <View className="border-t border-gray-200 bg-white">
-        <Suspense fallback={<Text>Loading audio...</Text>}>
-          <AudioPlayer hymn={hymn} />
-        </Suspense>
-      </View>
-      <FontSettingsDrawer
-        is_visible={show_font_settings}
-        on_close={() => set_show_font_settings(false)}
-        font_settings={font_settings}
-        on_font_settings_change={handle_font_settings_change}
+              <Icon
+                size={28}
+                name="cog"
+                color={colors.grey}
+              />
+            </Button>
+          ),
+        }}
       />
-    </View>
+      <View className="flex-1 bg-white">
+        <ScrollView className="flex-1 bg-white p-4">
+          {formatted_lyrics.map((lyric, index) => (
+            <View
+              key={index}
+              className="mb-4"
+            >
+              <Text
+                className="mb-2 font-bold"
+                style={{
+                  fontSize: font_settings.font_size - 2,
+                  lineHeight:
+                    font_settings.font_size * font_settings.line_height,
+                  fontFamily: font_settings.font_family,
+                }}
+              >
+                {lyric.id === -1 ? 'Refrain' : `Verse ${lyric.id + 1}`}
+              </Text>
+              <Text
+                style={{
+                  fontSize: font_settings.font_size,
+                  lineHeight:
+                    font_settings.font_size * font_settings.line_height,
+                  fontFamily: font_settings.font_family,
+                }}
+              >
+                {lyric.text}
+              </Text>
+            </View>
+          ))}
+        </ScrollView>
+        <View className="border-t border-gray-200 bg-white">
+          <Suspense fallback={<Text>Loading audio...</Text>}>
+            <AudioPlayer hymn={hymn} />
+          </Suspense>
+        </View>
+        <FontSettingsDrawer
+          is_visible={show_font_settings}
+          on_close={() => set_show_font_settings(false)}
+          font_settings={font_settings}
+          on_font_settings_change={handle_font_settings_change}
+        />
+      </View>
+    </>
   );
 }
 
@@ -209,19 +227,21 @@ export function AudioPlayer({ hymn }: AudioPlayerProps): React.ReactElement {
   }, [hymn.id]);
 
   return (
-    <View className="flex-row items-center justify-between p-4">
+    <View className="flex-row items-center justify-between p-4 pb-8">
       <View className="flex-1 flex-row items-center">
         <TouchableOpacity
           onPress={() => set_is_playing(!is_playing)}
           className="mr-4"
         >
           {is_playing ? (
-            <Pause
+            <Icon
+              name="pause"
               size={24}
               color="#000"
             />
           ) : (
-            <Play
+            <Icon
+              name="play"
               size={24}
               color="#000"
             />
@@ -237,16 +257,7 @@ export function AudioPlayer({ hymn }: AudioPlayerProps): React.ReactElement {
           maximumTrackTintColor="#9CA3AF"
         />
       </View>
-      <TouchableOpacity
-        onPress={() => handle_favorite_toggle(hymn.id)}
-        className="ml-4"
-      >
-        <Heart
-          size={24}
-          color={hymn.favorite ? '#EF4444' : '#6B7280'}
-          fill={hymn.favorite ? '#EF4444' : 'none'}
-        />
-      </TouchableOpacity>
+      <ToggleFavoriteButton id={hymn.id} />
     </View>
   );
 }
