@@ -1,6 +1,5 @@
 import Slider from '@react-native-community/slider';
-import { RouteProp } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
+import { router, useLocalSearchParams } from 'expo-router';
 import {
   ArrowLeft,
   Heart,
@@ -13,32 +12,22 @@ import { Modal, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 
 import {
   Hymn,
-  use_hymn,
-  use_settings,
-  use_toggle_hymn_favorite,
-  use_update_hymn_views,
-  use_update_settings,
-} from '../db/context';
-import { RootStackParamList } from './root-stack';
+  useHymn,
+  useSettings,
+  useToggleHymnFavorite,
+  useUpdateHymnViews,
+  useUpdateSettings,
+} from '../../features/db/context';
 
-type HymnScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Hymn'>;
-type HymnScreenRouteProp = RouteProp<RootStackParamList, 'Hymn'>;
+export default function HymnScreen(): React.ReactElement {
+  const params = useLocalSearchParams<{
+    hymn: string;
+  }>();
 
-type HymnScreenProps = {
-  navigation: HymnScreenNavigationProp;
-  route: HymnScreenRouteProp;
-};
-
-export function HymnScreen({
-  route,
-  navigation,
-}: HymnScreenProps): React.ReactElement {
-  const { id } = route.params;
-  console.log(id)
-  const hymn = use_hymn(id);
-  const font_settings = use_settings();
-  const handle_font_settings_change = use_update_settings();
-  const handle_view_update = use_update_hymn_views();
+  const hymn = useHymn(+params.hymn);
+  const font_settings = useSettings();
+  const handle_font_settings_change = useUpdateSettings();
+  const handle_view_update = useUpdateHymnViews();
   const [show_font_settings, set_show_font_settings] = useState<boolean>(false);
 
   React.useEffect(() => {
@@ -65,7 +54,7 @@ export function HymnScreen({
   return (
     <View className="flex-1 bg-white">
       <View className="flex-row items-center justify-between bg-white p-4">
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity onPress={() => router.back()}>
           <ArrowLeft
             size={24}
             color="#000"
@@ -207,7 +196,7 @@ type AudioPlayerProps = {
 export function AudioPlayer({ hymn }: AudioPlayerProps): React.ReactElement {
   const [is_playing, set_is_playing] = useState<boolean>(false);
   const [progress, set_progress] = useState<number>(0);
-  const handle_favorite_toggle = use_toggle_hymn_favorite();
+  const handle_favorite_toggle = useToggleHymnFavorite();
 
   // Mock audio loading
   useEffect(() => {

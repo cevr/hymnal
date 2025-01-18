@@ -1,10 +1,11 @@
 import {
   Hymn,
-  use_categories,
-  use_hymns,
-  use_toggle_hymn_favorite,
+  useCategories,
+  useHymns,
+  useToggleHymnFavorite,
 } from '@/features/db/context';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { Link } from 'expo-router';
 import { Heart, Search, SortAsc } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import {
@@ -16,23 +17,10 @@ import {
   View,
 } from 'react-native';
 
-import { RootStackParamList } from './root-stack';
-
-type HymnsScreenNavigationProp = StackNavigationProp<
-  RootStackParamList,
-  'Hymns'
->;
-
-type HymnsScreenProps = {
-  navigation: HymnsScreenNavigationProp;
-};
-
-export function HymnsScreen({
-  navigation,
-}: HymnsScreenProps): React.ReactElement {
-  const hymns = use_hymns();
-  const categories = use_categories();
-  const handle_favorite_toggle = use_toggle_hymn_favorite();
+export default function HymnsScreen(): React.ReactElement {
+  const hymns = useHymns();
+  const categories = useCategories();
+  const handle_favorite_toggle = useToggleHymnFavorite();
   const [search_query, set_search_query] = useState<string>('');
   const [selected_category, set_selected_category] = useState<string>('All');
   const [order_by, set_order_by] = useState<'number' | 'name' | 'views'>(
@@ -80,7 +68,6 @@ export function HymnsScreen({
         renderItem={({ item }) => (
           <HymnListItem
             hymn={item}
-            on_press={() => navigation.navigate('Hymn', { id: item.id })}
             on_favorite_toggle={() => handle_favorite_toggle(item.id)}
           />
         )}
@@ -192,18 +179,16 @@ export function SearchBar({
 
 type HymnListItemProps = {
   hymn: Hymn;
-  on_press: () => void;
   on_favorite_toggle: () => void;
 };
 
 export function HymnListItem({
   hymn,
-  on_press,
   on_favorite_toggle,
 }: HymnListItemProps): React.ReactElement {
   return (
-    <TouchableOpacity
-      onPress={on_press}
+    <Link
+      href={`/hymns/${hymn.id}`}
       className="flex-row items-center justify-between border-b border-gray-200 p-4"
     >
       <View className="flex-1">
@@ -220,6 +205,6 @@ export function HymnListItem({
           fill={hymn.favorite === 1 ? '#EF4444' : 'none'}
         />
       </TouchableOpacity>
-    </TouchableOpacity>
+    </Link>
   );
 }

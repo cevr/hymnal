@@ -7,13 +7,10 @@ import { initDatabase } from './config';
 import * as schema from './schema';
 
 type Database = Awaited<ReturnType<typeof initDatabase>>;
+type DatabaseClient = ReturnType<typeof makeDbClient>;
 
-const DatabaseContext = React.createContext<Awaited<
-  ReturnType<typeof initDatabase>
-> | null>(null);
-const DatabaseClientContext = React.createContext<ReturnType<
-  typeof makeDbClient
-> | null>(null);
+const DatabaseContext = React.createContext<Database | null>(null);
+const DatabaseClientContext = React.createContext<DatabaseClient | null>(null);
 
 export function DatabaseProvider({
   children,
@@ -36,16 +33,24 @@ export function DatabaseProvider({
 
 const dbCache = cache(async () => await initDatabase());
 
-export const makeDbClient = ({ db, prepared }: Database) => {
+const makeDbClient = ({ db, prepared }: Database) => {
   const client = cacheResource({
-    hymns: async () => await prepared.get_all_hymns.execute(),
+    hymns: async () => {
+      return await db.select().from(schema.hymns);
+    },
     hymn: async (_, id: number) => {
-      const res = await prepared.get_hymn_by_id.execute({ id });
+      const res = await db
+        .select()
+        .from(schema.hymns)
+        .where(eq(schema.hymns.id, id));
       return res[0];
     },
-    categories: async () => await prepared.get_all_categories.execute(),
+    categories: async () => await db.select().from(schema.categories),
     settings: async () => {
-      const res = await prepared.get_settings.execute();
+      const res = await db
+        .select()
+        .from(schema.settings)
+        .where(eq(schema.settings.id, 1));
       return res[0];
     },
   });
@@ -59,67 +64,84 @@ export type Hymn = InferSelectModel<typeof schema.hymns>;
 export type Category = InferSelectModel<typeof schema.categories>;
 export type Settings = InferSelectModel<typeof schema.settings>;
 
-function use_prepared(): Database['prepared'] {
+function usePrepared(): Database['prepared'] {
   const db = React.useContext(DatabaseContext);
   invariant(db, '[use_prepared] must be used within a DatabaseProvider');
   return db.prepared;
 }
 
-function use_db_client(): ReturnType<typeof makeDbClient> {
+function useDb(): Database['db'] {
+  const db = React.useContext(DatabaseContext);
+  invariant(db, '[use_db] must be used within a DatabaseProvider');
+  return db.db;
+}
+
+function useDbClient(): ReturnType<typeof makeDbClient> {
   const client = React.useContext(DatabaseClientContext);
   invariant(client, '[use_db_client] must be used within a DatabaseProvider');
   return client;
 }
 
-export function use_update_hymn_views() {
-  const prepared = use_prepared();
-  const client = use_db_client();
+export function useUpdateHymnViews() {
+  const db = useDb();
+  const client = useDbClient();
   return async (id: number) => {
-    await prepared.update_hymn_views.execute({ id });
+    await db
+      .update(schema.hymns)
+      .set({ views: sql`${schema.hymns.views} + 1` })
+      .where(eq(schema.hymns.id, id));
     client.invalidate('hymns');
     client.invalidate('hymn', id);
   };
 }
 
-export function use_toggle_hymn_favorite(): (id: number) => Promise<void> {
-  const prepared = use_prepared();
-  const client = use_db_client();
+export function useToggleHymnFavorite(): (id: number) => Promise<void> {
+  const db = useDb();
+  const client = useDbClient();
   return async (id) => {
-    await prepared.toggle_hymn_favorite.execute({ id });
+    await db
+      .update(schema.hymns)
+      .set({
+        favorite: sql`NOT ${schema.hymns.favorite}`,
+      })
+      .where(eq(schema.hymns.id, id));
     client.invalidate('hymns');
     client.invalidate('hymn', id);
   };
 }
 
-export function use_update_settings(): (
+export function useUpdateSettings(): (
   new_settings: Partial<Settings>,
 ) => Promise<void> {
-  const prepared = use_prepared();
-  const client = use_db_client();
+  const db = useDb();
+  const client = useDbClient();
   return async (new_settings) => {
     await client.mutate(['settings'], async () => {
-      await prepared.update_settings.execute(new_settings);
+      await db
+        .update(schema.settings)
+        .set(new_settings)
+        .where(eq(schema.settings.id, 1));
     });
   };
 }
 
-export function use_hymns(): Hymn[] {
-  const client = use_db_client();
+export function useHymns(): Hymn[] {
+  const client = useDbClient();
   return client.use('hymns');
 }
 
-export function use_hymn(id: number): Hymn {
-  const client = use_db_client();
+export function useHymn(id: number): Hymn {
+  const client = useDbClient();
   const hymn = client.use('hymn', id);
   return hymn;
 }
 
-export function use_categories(): Category[] {
-  const client = use_db_client();
+export function useCategories(): Category[] {
+  const client = useDbClient();
   return client.use('categories');
 }
 
-export function use_settings(): Settings {
-  const client = use_db_client();
+export function useSettings(): Settings {
+  const client = useDbClient();
   return client.use('settings');
 }
