@@ -1,70 +1,45 @@
 import Slider from '@react-native-community/slider';
 import { Icon } from '@roninoss/icons';
-import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { Stack, useLocalSearchParams } from 'expo-router';
 import React, { Suspense, useEffect, useState } from 'react';
-import { Modal, ScrollView, TouchableOpacity, View } from 'react-native';
+import { ScrollView, TouchableOpacity, View } from 'react-native';
 
-import { Button } from '~/components/nativewindui/button';
 import { Text } from '~/components/nativewindui/text';
 import { ToggleFavoriteButton } from '~/features/hymns/toggle-favorite-button';
-import { useColorScheme } from '~/lib/use-color-scheme';
 
-import { Hymn, useHymn, useUpdateHymnViews } from '../../features/db/context';
-
-type Lyric = { id: number; text: string };
+import { Lyric, useHymn, useUpdateHymnViews } from '../../features/db/context';
 
 export default function HymnScreen(): React.ReactElement {
   const params = useLocalSearchParams<{
     hymn: string;
   }>();
-  const { colors } = useColorScheme();
 
   const hymn = useHymn(+params.hymn);
-  const handle_view_update = useUpdateHymnViews();
+  const handleViewUpdate = useUpdateHymnViews();
 
   React.useEffect(() => {
-    handle_view_update(hymn.id);
+    handleViewUpdate(hymn.id);
   }, [hymn.id]);
 
-  const { refrain, verses }: { refrain: Lyric[]; verses: Lyric[] } =
-    hymn.verses.reduce(
-      (acc: { refrain: Lyric[]; verses: Lyric[] }, lyric: Lyric) => {
-        if (lyric.id === -1) {
-          acc.refrain.push(lyric);
-        } else {
-          acc.verses.push(lyric);
-        }
-        return acc;
-      },
-      { refrain: [], verses: [] },
-    );
+  const { refrain, verses } = hymn.verses.reduce(
+    (acc, lyric) => {
+      if (lyric.id === -1) {
+        acc.refrain.push(lyric);
+      } else {
+        acc.verses.push(lyric);
+      }
+      return acc;
+    },
+    { refrain: [] as Lyric[], verses: [] as Lyric[] },
+  );
 
-  const formatted_lyrics: Lyric[] = [verses[0], ...refrain, ...verses.slice(1)];
+  const formattedLyrics = [verses[0], ...refrain, ...verses.slice(1)];
 
   return (
     <>
       <Stack.Screen
         options={{
           title: `${hymn.id}`,
-
-          headerTitleStyle: {
-            fontWeight: 'bold',
-            fontSize: 18,
-          },
-
-          headerLeft: () => (
-            <Button
-              variant="plain"
-              onPress={() => router.back()}
-              hitSlop={10}
-            >
-              <Icon
-                size={24}
-                name="chevron-left"
-                color={colors.primary}
-              />
-            </Button>
-          ),
         }}
       />
       <View className="flex-1 bg-white">
@@ -75,7 +50,7 @@ export default function HymnScreen(): React.ReactElement {
           >
             {hymn.name}
           </Text>
-          {formatted_lyrics.map((lyric, index) => (
+          {formattedLyrics.map((lyric, index) => (
             <View
               key={index}
               className="mb-4 gap-1"
@@ -92,7 +67,7 @@ export default function HymnScreen(): React.ReactElement {
         </ScrollView>
         <View className="border-t border-gray-200 bg-white">
           <Suspense fallback={<Text>Loading audio...</Text>}>
-            <AudioPlayer hymn={hymn} />
+            <AudioPlayer id={hymn.id} />
           </Suspense>
         </View>
       </View>
@@ -101,12 +76,12 @@ export default function HymnScreen(): React.ReactElement {
 }
 
 type AudioPlayerProps = {
-  hymn: Hymn;
+  id: number;
 };
 
-export function AudioPlayer({ hymn }: AudioPlayerProps): React.ReactElement {
-  const [is_playing, set_is_playing] = useState<boolean>(false);
-  const [progress, set_progress] = useState<number>(0);
+export function AudioPlayer({ id }: AudioPlayerProps): React.ReactElement {
+  const [isPlaying, setIsPlaying] = useState<boolean>(false);
+  const [progress, setProgress] = useState<number>(0);
 
   // Mock audio loading
   useEffect(() => {
@@ -116,16 +91,16 @@ export function AudioPlayer({ hymn }: AudioPlayerProps): React.ReactElement {
     }, 1000);
 
     return () => clearTimeout(timeout);
-  }, [hymn.id]);
+  }, [id]);
 
   return (
     <View className="flex-row items-center justify-between p-4 pb-8">
       <View className="flex-1 flex-row items-center">
         <TouchableOpacity
-          onPress={() => set_is_playing(!is_playing)}
+          onPress={() => setIsPlaying(!isPlaying)}
           className="mr-4"
         >
-          {is_playing ? (
+          {isPlaying ? (
             <Icon
               name="pause"
               size={24}
@@ -144,12 +119,12 @@ export function AudioPlayer({ hymn }: AudioPlayerProps): React.ReactElement {
           minimumValue={0}
           maximumValue={1}
           value={progress}
-          onValueChange={set_progress}
+          onValueChange={setProgress}
           minimumTrackTintColor="#000"
           maximumTrackTintColor="#9CA3AF"
         />
       </View>
-      <ToggleFavoriteButton id={hymn.id} />
+      <ToggleFavoriteButton id={id} />
     </View>
   );
 }

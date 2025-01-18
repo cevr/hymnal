@@ -15,76 +15,16 @@ import {
   ListSectionHeader,
 } from '~/components/nativewindui/list';
 import { Text } from '~/components/nativewindui/text';
-import {
-  Hymn,
-  useCategories,
-  useHymn,
-  useHymns,
-  useToggleHymnFavorite,
-} from '~/features/db/context';
+import { Hymn, useCategories, useHymns } from '~/features/db/context';
 import { ToggleFavoriteButton } from '~/features/hymns/toggle-favorite-button';
 import { useColorScheme } from '~/lib/use-color-scheme';
 
 export default function HymnsScreen(): React.ReactElement {
   const { colors } = useColorScheme();
   const searchBarRef = React.useRef<AdaptiveSearchBarRef>(null);
-  const hymns = useHymns();
-  const categories = useCategories();
-  const [show_favorites, set_show_favorites] = React.useState<boolean>(false);
-  const [search_query, set_search_query] = React.useState<string>('');
-
-  const deferredSearchQuery = React.useDeferredValue(search_query);
-
-  let filtered_hymns = hymns;
-
-  if (deferredSearchQuery) {
-    filtered_hymns = matchSorter(hymns, deferredSearchQuery, {
-      keys: ['id', 'name', 'category', 'verses.text'],
-    });
-  }
-
-  if (show_favorites) {
-    filtered_hymns = filtered_hymns.filter((hymn) => hymn.favorite === 1);
-  }
-
-  const category_map = categories.reduce((acc, category) => {
-    acc[category.id] = 0;
-    return acc;
-  }, [] as number[]);
-  const hymnFavoriteToggle = useToggleHymnFavorite();
-
-  const list_data = filtered_hymns.reduce(
-    (acc, hymn) => {
-      const categoryCount = category_map[hymn.category_id];
-      if (categoryCount === 0) {
-        acc.push(hymn.category);
-      }
-      acc.push({
-        id: hymn.id,
-        title: hymn.name,
-        subTitle: `#${hymn.id}`,
-        hymn,
-        onHymnFavoriteToggle: () => hymnFavoriteToggle(hymn.id),
-        activeColor: colors.primary,
-        inactiveColor: colors.grey,
-      });
-      category_map[hymn.category_id]++;
-
-      return acc;
-    },
-    [] as (
-      | {
-          hymn: Hymn;
-          id: number;
-          title: string;
-          subTitle: string;
-          onHymnFavoriteToggle: () => void;
-          activeColor?: string;
-          inactiveColor?: string;
-        }
-      | string
-    )[],
-  );
+  const [showFavorites, setShowFavorites] = React.useState<boolean>(false);
+  const [query, setQuery] = React.useState<string>('');
+  const deferredQuery = React.useDeferredValue(query);
 
   return (
     <>
@@ -96,13 +36,13 @@ export default function HymnsScreen(): React.ReactElement {
           <Button
             variant="plain"
             size="icon"
-            onPress={() => set_show_favorites(!show_favorites)}
+            onPress={() => setShowFavorites(!showFavorites)}
             hitSlop={20}
           >
             <Icon
               size={36}
-              name={show_favorites ? 'heart' : 'heart-outline'}
-              color={show_favorites ? colors.primary : colors.grey}
+              name={showFavorites ? 'heart' : 'heart-outline'}
+              color={showFavorites ? colors.primary : colors.grey}
             />
           </Button>
         )}
@@ -110,7 +50,7 @@ export default function HymnsScreen(): React.ReactElement {
           ref: searchBarRef,
           iosCancelButtonText: 'Cancel',
           onChangeText: (text) => {
-            set_search_query(text);
+            setQuery(text);
           },
           onBlur: () => {
             searchBarRef.current?.cancelSearch();
@@ -118,18 +58,79 @@ export default function HymnsScreen(): React.ReactElement {
           placeholder: 'Search hymns...',
         }}
       />
-
-      <List
-        variant="insets"
-        data={list_data as any}
-        estimatedItemSize={ESTIMATED_ITEM_HEIGHT.withSubTitle}
-        renderItem={renderItem}
-        ListEmptyComponent={ListEmptyComponent}
-        keyExtractor={(item) =>
-          typeof item === 'string' ? item : item.id.toString()
-        }
+      <HymnList
+        query={deferredQuery}
+        showFavorites={showFavorites}
       />
     </>
+  );
+}
+
+function HymnList({
+  query,
+  showFavorites,
+}: {
+  query: string;
+  showFavorites: boolean;
+}) {
+  const categories = useCategories();
+  const hymns = useHymns();
+
+  let filteredHymns = hymns;
+
+  if (showFavorites) {
+    filteredHymns = filteredHymns.filter((hymn) => hymn.favorite === 1);
+  }
+
+  if (query) {
+    filteredHymns = matchSorter(filteredHymns, query, {
+      keys: ['id', 'name'],
+    });
+  }
+
+  const categoryMap = categories.reduce((acc, category) => {
+    acc[category.id] = 0;
+    return acc;
+  }, [] as number[]);
+
+  const listData = filteredHymns.reduce(
+    (acc, hymn) => {
+      const categoryCount = categoryMap[hymn.category_id];
+      if (categoryCount === 0) {
+        acc.push(hymn.category);
+      }
+      acc.push({
+        id: hymn.id,
+        title: hymn.name,
+        subTitle: `#${hymn.id}`,
+        hymn,
+      });
+      categoryMap[hymn.category_id]++;
+
+      return acc;
+    },
+    [] as (
+      | {
+          hymn: Hymn;
+          id: number;
+          title: string;
+          subTitle: string;
+        }
+      | string
+    )[],
+  );
+
+  return (
+    <List
+      variant="insets"
+      data={listData as any}
+      estimatedItemSize={ESTIMATED_ITEM_HEIGHT.withSubTitle}
+      renderItem={renderItem}
+      ListEmptyComponent={ListEmptyComponent}
+      keyExtractor={(item) =>
+        typeof item === 'string' ? item : item.id.toString()
+      }
+    />
   );
 }
 
@@ -146,9 +147,6 @@ function renderItem(
     hymn: Hymn;
     id: number;
     title: string;
-    onHymnFavoriteToggle: () => void;
-    activeColor?: string;
-    inactiveColor?: string;
   }>,
 ) {
   if (typeof info.item === 'string') {
@@ -158,7 +156,7 @@ function renderItem(
     <ListItem
       rightView={<ToggleFavoriteButton id={info.item.id} />}
       {...info}
-      onPress={() => router.push(`/hymns/${info.item.hymn.id}`)}
+      onPress={() => router.push(`/hymns/${info.item.id}`)}
     />
   );
 }

@@ -11,6 +11,12 @@ import { invariant } from '../utils';
 import { initDatabase } from './config';
 import * as schema from './schema';
 
+const DatabaseOptions = queryOptions({
+  queryKey: ['database'],
+  queryFn: initDatabase,
+  staleTime: Infinity,
+});
+
 type Database = Awaited<ReturnType<typeof initDatabase>>;
 type DatabaseQueryOptions = ReturnType<typeof makeOptions>;
 
@@ -22,7 +28,7 @@ const makeOptions = (client: QueryClient, database: Database) => {
   const options = {
     hymns: queryOptions({
       queryKey: ['hymns'],
-      queryFn: () => database.db.select().from(schema.hymns),
+      queryFn: async () => await database.db.select().from(schema.hymns),
     }),
     hymn: (id: number) =>
       queryOptions({
@@ -66,11 +72,7 @@ export function DatabaseProvider({
   children: React.ReactNode;
 }): React.ReactNode {
   const client = useQueryClient();
-  const { data } = useSuspenseQuery({
-    queryKey: ['database'],
-    queryFn: initDatabase,
-    staleTime: Infinity,
-  });
+  const { data } = useSuspenseQuery(DatabaseOptions);
 
   const [options] = React.useState(() => makeOptions(client, data));
 
@@ -84,6 +86,7 @@ export function DatabaseProvider({
 }
 
 export type Hymn = InferSelectModel<typeof schema.hymns>;
+export type Lyric = Hymn['verses'][0];
 export type Category = InferSelectModel<typeof schema.categories>;
 export type Settings = InferSelectModel<typeof schema.settings>;
 

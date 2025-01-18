@@ -9,12 +9,10 @@
     },
     "scheme": "hymnal",
     "experiments": {
-      "tsconfigPaths": true
+      "tsconfigPaths": true,
+      "reactCompiler": true
     },
-    "plugins": [
-      "expo-sqlite",
-      "expo-router"
-    ],
+    "plugins": ["expo-sqlite", "expo-router"],
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -23,9 +21,7 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.cev.hymnal"

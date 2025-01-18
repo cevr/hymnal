@@ -5,13 +5,7 @@ import 'expo-dev-client';
 
 import { ThemeProvider as NavThemeProvider } from '@react-navigation/native';
 import { PortalHost } from '@rn-primitives/portal';
-import {
-  QueryClient,
-  QueryClientProvider,
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 
