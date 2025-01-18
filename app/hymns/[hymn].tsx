@@ -1,21 +1,15 @@
 import Slider from '@react-native-community/slider';
 import { Icon } from '@roninoss/icons';
-import { Stack, useLocalSearchParams } from 'expo-router';
+import { router, Stack, useLocalSearchParams } from 'expo-router';
 import React, { Suspense, useEffect, useState } from 'react';
-import { Modal, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { Modal, ScrollView, TouchableOpacity, View } from 'react-native';
 
 import { Button } from '~/components/nativewindui/button';
+import { Text } from '~/components/nativewindui/text';
 import { ToggleFavoriteButton } from '~/features/hymns/toggle-favorite-button';
 import { useColorScheme } from '~/lib/use-color-scheme';
 
-import {
-  Hymn,
-  useHymn,
-  useSettings,
-  useToggleHymnFavorite,
-  useUpdateHymnViews,
-  useUpdateSettings,
-} from '../../features/db/context';
+import { Hymn, useHymn, useUpdateHymnViews } from '../../features/db/context';
 
 type Lyric = { id: number; text: string };
 
@@ -26,10 +20,7 @@ export default function HymnScreen(): React.ReactElement {
   const { colors } = useColorScheme();
 
   const hymn = useHymn(+params.hymn);
-  const font_settings = useSettings();
-  const handle_font_settings_change = useUpdateSettings();
   const handle_view_update = useUpdateHymnViews();
-  const [show_font_settings, set_show_font_settings] = useState<boolean>(false);
 
   React.useEffect(() => {
     handle_view_update(hymn.id);
@@ -54,55 +45,48 @@ export default function HymnScreen(): React.ReactElement {
     <>
       <Stack.Screen
         options={{
-          title: `${hymn.id}. ${hymn.name}`,
+          title: `${hymn.id}`,
 
           headerTitleStyle: {
             fontWeight: 'bold',
             fontSize: 18,
           },
 
-          headerRight: () => (
+          headerLeft: () => (
             <Button
               variant="plain"
-              onPress={() => set_show_font_settings(true)}
+              onPress={() => router.back()}
+              hitSlop={10}
             >
               <Icon
-                size={28}
-                name="cog"
-                color={colors.grey}
+                size={24}
+                name="chevron-left"
+                color={colors.primary}
               />
             </Button>
           ),
         }}
       />
       <View className="flex-1 bg-white">
-        <ScrollView className="flex-1 bg-white p-4">
+        <ScrollView className="flex-1 gap-4 bg-white p-4">
+          <Text
+            variant="title2"
+            className="mb-4 font-bold"
+          >
+            {hymn.name}
+          </Text>
           {formatted_lyrics.map((lyric, index) => (
             <View
               key={index}
-              className="mb-4"
+              className="mb-4 gap-1"
             >
               <Text
-                className="mb-2 font-bold"
-                style={{
-                  fontSize: font_settings.font_size - 2,
-                  lineHeight:
-                    font_settings.font_size * font_settings.line_height,
-                  fontFamily: font_settings.font_family,
-                }}
+                className="font-semibold"
+                variant="caption2"
               >
                 {lyric.id === -1 ? 'Refrain' : `Verse ${lyric.id + 1}`}
               </Text>
-              <Text
-                style={{
-                  fontSize: font_settings.font_size,
-                  lineHeight:
-                    font_settings.font_size * font_settings.line_height,
-                  fontFamily: font_settings.font_family,
-                }}
-              >
-                {lyric.text}
-              </Text>
+              <Text variant="body">{lyric.text}</Text>
             </View>
           ))}
         </ScrollView>
@@ -111,99 +95,8 @@ export default function HymnScreen(): React.ReactElement {
             <AudioPlayer hymn={hymn} />
           </Suspense>
         </View>
-        <FontSettingsDrawer
-          is_visible={show_font_settings}
-          on_close={() => set_show_font_settings(false)}
-          font_settings={font_settings}
-          on_font_settings_change={handle_font_settings_change}
-        />
       </View>
     </>
-  );
-}
-
-type FontSettingsDrawerProps = {
-  is_visible: boolean;
-  on_close: () => void;
-  font_settings: {
-    font_size: number;
-    line_height: number;
-    font_family: string;
-  };
-  on_font_settings_change: (settings: {
-    font_size: number;
-    line_height: number;
-    font_family: string;
-  }) => void;
-};
-
-export function FontSettingsDrawer({
-  is_visible,
-  on_close,
-  font_settings,
-  on_font_settings_change,
-}: FontSettingsDrawerProps) {
-  return (
-    <Modal
-      visible={is_visible}
-      animationType="slide"
-      transparent={true}
-      onRequestClose={on_close}
-    >
-      <View className="flex-1 justify-end">
-        <View className="rounded-t-3xl bg-white p-4">
-          <Text className="mb-4 text-xl font-bold">Font Settings</Text>
-          <View className="mb-4">
-            <Text className="mb-2">Font Size</Text>
-            <Slider
-              minimumValue={12}
-              maximumValue={24}
-              step={1}
-              value={font_settings.font_size}
-              onValueChange={(value) =>
-                on_font_settings_change({ ...font_settings, font_size: value })
-              }
-            />
-          </View>
-          <View className="mb-4">
-            <Text className="mb-2">Line Height</Text>
-            <Slider
-              minimumValue={1}
-              maximumValue={2}
-              step={0.1}
-              value={font_settings.line_height}
-              onValueChange={(value) =>
-                on_font_settings_change({
-                  ...font_settings,
-                  line_height: value,
-                })
-              }
-            />
-          </View>
-          <View className="mb-4">
-            <Text className="mb-2">Font Family</Text>
-            <TouchableOpacity
-              className="rounded bg-gray-200 p-2"
-              onPress={() =>
-                on_font_settings_change({
-                  ...font_settings,
-                  font_family:
-                    font_settings.font_family === 'System' ? 'Serif' : 'System',
-                })
-              }
-            >
-              <Text>{font_settings.font_family}</Text>
-            </TouchableOpacity>
-          </View>
-          <TouchableOpacity
-            className="rounded bg-black p-4"
-            onPress={on_close}
-          >
-            <Text className="text-center text-white">Close</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </Modal>
   );
 }
 
@@ -214,7 +107,6 @@ type AudioPlayerProps = {
 export function AudioPlayer({ hymn }: AudioPlayerProps): React.ReactElement {
   const [is_playing, set_is_playing] = useState<boolean>(false);
   const [progress, set_progress] = useState<number>(0);
-  const handle_favorite_toggle = useToggleHymnFavorite();
 
   // Mock audio loading
   useEffect(() => {
