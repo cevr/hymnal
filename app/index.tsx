@@ -40,7 +40,7 @@ export default function HymnsScreen(): React.ReactElement {
             hitSlop={20}
           >
             <Icon
-              size={36}
+              size={28}
               name={showFavorites ? 'heart' : 'heart-outline'}
               color={showFavorites ? colors.primary : colors.grey}
             />
@@ -93,45 +93,45 @@ function HymnList({
     return acc;
   }, [] as number[]);
 
-  const listData = filteredHymns.reduce(
-    (acc, hymn) => {
-      const categoryCount = categoryMap[hymn.category_id];
-      if (categoryCount === 0) {
-        acc.push(hymn.category);
-      }
-      acc.push({
-        id: hymn.id,
-        title: hymn.name,
-        subTitle: `#${hymn.id}`,
-        hymn,
-      });
-      categoryMap[hymn.category_id]++;
+  const listData = filteredHymns.reduce((acc, hymn) => {
+    const categoryCount = categoryMap[hymn.category_id];
+    if (categoryCount === 0) {
+      acc.push(hymn.category);
+    }
+    acc.push({
+      id: hymn.id,
+      title: hymn.name,
+      subTitle: `#${hymn.id}`,
+      hymn,
+    });
+    categoryMap[hymn.category_id]++;
 
-      return acc;
-    },
-    [] as (
-      | {
-          hymn: Hymn;
-          id: number;
-          title: string;
-          subTitle: string;
-        }
-      | string
-    )[],
-  );
+    return acc;
+  }, [] as ListItem[]);
 
   return (
     <List
       variant="insets"
-      data={listData as any}
+      data={listData}
       estimatedItemSize={ESTIMATED_ITEM_HEIGHT.withSubTitle}
       renderItem={renderItem}
       ListEmptyComponent={ListEmptyComponent}
-      keyExtractor={(item) =>
-        typeof item === 'string' ? item : item.id.toString()
-      }
+      keyExtractor={keyExtractor}
     />
   );
+}
+
+type ListItem =
+  | {
+      hymn: Hymn;
+      id: number;
+      title: string;
+      subTitle: string;
+    }
+  | string;
+
+function keyExtractor(item: { id: number } | string) {
+  return typeof item === 'string' ? item : item.id.toString();
 }
 
 function ListEmptyComponent() {
@@ -142,21 +142,16 @@ function ListEmptyComponent() {
   );
 }
 
-function renderItem(
-  info: ListRenderItemInfo<{
-    hymn: Hymn;
-    id: number;
-    title: string;
-  }>,
-) {
-  if (typeof info.item === 'string') {
+function renderItem(info: ListRenderItemInfo<ListItem>) {
+  const item = info.item;
+  if (typeof item === 'string') {
     return <ListSectionHeader {...info} />;
   }
   return (
     <ListItem
-      rightView={<ToggleFavoriteButton id={info.item.id} />}
+      rightView={<ToggleFavoriteButton id={item.id} />}
       {...info}
-      onPress={() => router.push(`/hymns/${info.item.id}`)}
+      onPress={() => router.push(`/hymns/${item.id}`)}
     />
   );
 }

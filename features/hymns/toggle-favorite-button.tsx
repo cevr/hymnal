@@ -18,7 +18,7 @@ export function ToggleFavoriteButton({ id }: { id: number }): React.ReactNode {
       hitSlop={10}
     >
       <Icon
-        size={32}
+        size={28}
         name={hymn.favorite === 1 ? 'heart' : 'heart-outline'}
         color={hymn.favorite === 1 ? colors.primary : colors.grey}
       />

@@ -25,7 +25,7 @@ const queryClient = new QueryClient();
 
 export default function RootLayout() {
   useInitialAndroidBarSync();
-  const { colorScheme, isDarkColorScheme } = useColorScheme();
+  const { colorScheme, isDarkColorScheme, colors } = useColorScheme();
 
   return (
     <>
@@ -37,7 +37,13 @@ export default function RootLayout() {
       <NavThemeProvider value={NAV_THEME[colorScheme]}>
         <QueryClientProvider client={queryClient}>
           <DatabaseProvider>
-            <Stack />
+            <Stack
+              screenOptions={{
+                headerStyle: {
+                  backgroundColor: colors.background,
+                },
+              }}
+            />
             <PortalHost />
           </DatabaseProvider>
         </QueryClientProvider>
