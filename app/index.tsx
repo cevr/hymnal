@@ -35,11 +35,17 @@ export default function HymnsScreen(): React.ReactElement {
 
   const deferredSearchQuery = React.useDeferredValue(search_query);
 
-  const filtered_hymns = matchSorter(hymns, deferredSearchQuery, {
-    keys: ['id', 'name', 'category', 'verses.text'],
-  }).filter((hymn) => {
-    return !show_favorites || hymn.favorite === 1;
-  });
+  let filtered_hymns = hymns;
+
+  if (deferredSearchQuery) {
+    filtered_hymns = matchSorter(hymns, deferredSearchQuery, {
+      keys: ['id', 'name', 'category', 'verses.text'],
+    });
+  }
+
+  if (show_favorites) {
+    filtered_hymns = filtered_hymns.filter((hymn) => hymn.favorite === 1);
+  }
 
   const category_map = categories.reduce((acc, category) => {
     acc[category.id] = 0;
