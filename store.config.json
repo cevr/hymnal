@@ -1,0 +1,23 @@
+{
+  "configVersion": 0,
+  "apple": {
+    "info": {
+      "en-US": {
+        "title": "SDA Hymnal",
+        "subtitle": "Simple SDA Hymnal",
+        "description": "App that lets your browse the SDA Hymnal and play accompaniment",
+        "keywords": [
+          "SDA",
+          "hymnal",
+          "music",
+          "accompaniment",
+          "church",
+          "seventh-day adventist"
+        ],
+        "marketingUrl": "",
+        "supportUrl": "",
+        "privacyPolicyUrl": ""
+      }
+    }
+  }
+}
