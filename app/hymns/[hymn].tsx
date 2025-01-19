@@ -1,8 +1,10 @@
 import { Icon } from '@roninoss/icons';
+import { useAudioPlayer } from 'expo-audio';
 import { Stack, useLocalSearchParams } from 'expo-router';
-import React, { Suspense, useEffect, useState } from 'react';
+import * as React from 'react';
 import { ScrollView, TouchableOpacity, View } from 'react-native';
 
+import { Button } from '~/components/nativewindui/button';
 import { Slider } from '~/components/nativewindui/slider';
 import { Text } from '~/components/nativewindui/text';
 import { ToggleFavoriteButton } from '~/features/hymns/toggle-favorite-button';
@@ -36,16 +38,19 @@ export default function HymnScreen(): React.ReactElement {
         <React.Suspense fallback={null}>
           <HymnLyrics id={id} />
         </React.Suspense>
-        <View
-          className="border-t border-gray-200"
-          style={{
-            backgroundColor: colors.background,
-          }}
-        >
-          <Suspense fallback={<Text>Loading audio...</Text>}>
-            <AudioPlayer id={id} />
-          </Suspense>
-        </View>
+        {/* above 695 is not music but call/response */}
+        {id <= 695 ? (
+          <View
+            className="border-t border-gray-200"
+            style={{
+              backgroundColor: colors.background,
+            }}
+          >
+            <React.Suspense fallback={null}>
+              <AudioPlayer id={id} />
+            </React.Suspense>
+          </View>
+        ) : null}
       </View>
     </>
   );
@@ -98,28 +103,22 @@ type AudioPlayerProps = {
   id: number;
 };
 
-export function AudioPlayer({ id }: AudioPlayerProps): React.ReactElement {
-  const [isPlaying, setIsPlaying] = useState<boolean>(false);
-  const [progress, setProgress] = useState<number>(0);
+//https://cvr-hymns.s3.amazonaws.com/{hymn_number}.mp3
 
-  // Mock audio loading
-  useEffect(() => {
-    // Simulate audio loading
-    const timeout: NodeJS.Timeout = setTimeout(() => {
-      // Audio loaded
-    }, 1000);
-
-    return () => clearTimeout(timeout);
-  }, [id]);
+export function AudioPlayer({ id }: AudioPlayerProps): React.ReactNode {
+  const player = useAudioPlayer(`https://cvr-hymns.s3.amazonaws.com/${id}.mp3`);
 
   return (
     <View className="flex-row items-center justify-between p-4 pb-12">
-      <View className="flex-1 flex-row items-center">
-        <TouchableOpacity
-          onPress={() => setIsPlaying(!isPlaying)}
-          className="mr-4"
+      <View className="flex-1 flex-row items-center gap-4">
+        <Button
+          hitSlop={10}
+          variant="plain"
+          onPress={() => {
+            player.playing ? player.pause() : player.play();
+          }}
         >
-          {isPlaying ? (
+          {player.playing ? (
             <Icon
               name="pause"
               size={24}
@@ -132,13 +131,15 @@ export function AudioPlayer({ id }: AudioPlayerProps): React.ReactElement {
               color="#000"
             />
           )}
-        </TouchableOpacity>
+        </Button>
         <Slider
           style={{ flex: 1 }}
           minimumValue={0}
           maximumValue={1}
-          value={progress}
-          onValueChange={setProgress}
+          value={player.currentTime / player.duration}
+          onValueChange={(value) => {
+            player.seekTo(player.duration * value);
+          }}
         />
       </View>
     </View>
