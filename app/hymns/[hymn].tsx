@@ -1,5 +1,5 @@
 import { Icon } from '@roninoss/icons';
-import { useAudioPlayer } from 'expo-audio';
+import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import * as React from 'react';
 import { ScrollView, TouchableOpacity, View } from 'react-native';
@@ -31,7 +31,12 @@ export default function HymnScreen(): React.ReactElement {
       <Stack.Screen
         options={{
           title: params.hymn,
-          headerRight: () => <ToggleFavoriteButton id={id} />,
+          headerRight: () => (
+            <ToggleFavoriteButton
+              size="lg"
+              id={id}
+            />
+          ),
         }}
       />
       <View className="flex-1">
@@ -103,10 +108,9 @@ type AudioPlayerProps = {
   id: number;
 };
 
-//https://cvr-hymns.s3.amazonaws.com/{hymn_number}.mp3
-
 export function AudioPlayer({ id }: AudioPlayerProps): React.ReactNode {
   const player = useAudioPlayer(`https://cvr-hymns.s3.amazonaws.com/${id}.mp3`);
+  const status = useAudioPlayerStatus(player);
 
   return (
     <View className="flex-row items-center justify-between p-4 pb-12">
@@ -115,10 +119,10 @@ export function AudioPlayer({ id }: AudioPlayerProps): React.ReactNode {
           hitSlop={10}
           variant="plain"
           onPress={() => {
-            player.playing ? player.pause() : player.play();
+            status.playing ? player.pause() : player.play();
           }}
         >
-          {player.playing ? (
+          {status.playing ? (
             <Icon
               name="pause"
               size={24}
@@ -136,12 +140,21 @@ export function AudioPlayer({ id }: AudioPlayerProps): React.ReactNode {
           style={{ flex: 1 }}
           minimumValue={0}
           maximumValue={1}
-          value={player.currentTime / player.duration}
+          value={status.currentTime / status.duration}
           onValueChange={(value) => {
-            player.seekTo(player.duration * value);
+            player.seekTo(status.duration * value);
           }}
         />
+        <Text variant="subhead">
+          {secondsToMinutes(status.currentTime)} /{' '}
+          {secondsToMinutes(status.duration)}
+        </Text>
       </View>
     </View>
   );
+}
+function secondsToMinutes(seconds: number): string {
+  return `${Math.floor(seconds / 60)}:${Math.floor(seconds % 60)
+    .toString()
+    .padStart(2, '0')}`;
 }
