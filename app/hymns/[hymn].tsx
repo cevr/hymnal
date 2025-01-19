@@ -2,7 +2,7 @@ import { Icon } from '@roninoss/icons';
 import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import * as React from 'react';
-import { ScrollView, TouchableOpacity, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 
 import { Button } from '~/components/nativewindui/button';
 import { Slider } from '~/components/nativewindui/slider';
@@ -31,12 +31,7 @@ export default function HymnScreen(): React.ReactElement {
       <Stack.Screen
         options={{
           title: params.hymn,
-          headerRight: () => (
-            <ToggleFavoriteButton
-              size="lg"
-              id={id}
-            />
-          ),
+          headerRight: () => <ToggleFavoriteButton id={id} />,
         }}
       />
       <View className="flex-1">

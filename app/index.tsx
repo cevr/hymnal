@@ -1,4 +1,5 @@
 import { Icon } from '@roninoss/icons';
+import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { matchSorter } from 'match-sorter';
 import * as React from 'react';
@@ -15,8 +16,16 @@ import {
   ListSectionHeader,
 } from '~/components/nativewindui/list';
 import { Text } from '~/components/nativewindui/text';
-import { Hymn, useCategories, useHymns } from '~/features/db/context';
-import { ToggleFavoriteButton } from '~/features/hymns/toggle-favorite-button';
+import {
+  Hymn,
+  useCategories,
+  useDbOptions,
+  useHymns,
+} from '~/features/db/context';
+import {
+  ToggleFavoriteButton,
+  ToggleFavoriteButtonFallback,
+} from '~/features/hymns/toggle-favorite-button';
 import { useColorScheme } from '~/lib/use-color-scheme';
 
 export default function HymnsScreen(): React.ReactElement {
@@ -29,7 +38,7 @@ export default function HymnsScreen(): React.ReactElement {
   return (
     <>
       <AdaptiveSearchHeader
-        iosTitle="Hymns"
+        iosTitle=""
         iosIsLargeTitle={false}
         shadowVisible={false}
         rightView={() => (
@@ -73,6 +82,9 @@ function HymnList({
   query: string;
   showFavorites: boolean;
 }) {
+  const client = useQueryClient();
+  const options = useDbOptions();
+
   const categories = useCategories();
   const hymns = useHymns();
 
@@ -117,6 +129,13 @@ function HymnList({
       renderItem={renderItem}
       ListEmptyComponent={ListEmptyComponent}
       keyExtractor={keyExtractor}
+      onViewableItemsChanged={({ viewableItems }) => {
+        viewableItems.forEach(({ item }) => {
+          if (typeof item !== 'string') {
+            client.prefetchQuery(options.hymn(item.id));
+          }
+        });
+      }}
     />
   );
 }
@@ -149,7 +168,11 @@ function renderItem(info: ListRenderItemInfo<ListItem>) {
   }
   return (
     <ListItem
-      rightView={<ToggleFavoriteButton id={item.id} />}
+      rightView={
+        <React.Suspense fallback={<ToggleFavoriteButtonFallback />}>
+          <ToggleFavoriteButton id={item.id} />
+        </React.Suspense>
+      }
       {...info}
       onPress={() => router.push(`/hymns/${item.id}`)}
     />

@@ -317,7 +317,7 @@ function ListItemComponent<T extends ListDataItem>(
           {!!leftView && <View>{leftView}</View>}
           <View
             className={cn(
-              'h-full flex-1 flex-row',
+              'h-full flex-1 flex-row gap-6',
               !item.subTitle ? 'ios:py-3 py-[18px]' : 'ios:py-2 py-2',
               !leftView && 'ml-4',
               !rightView && 'pr-4',

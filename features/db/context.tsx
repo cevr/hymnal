@@ -96,13 +96,13 @@ function usePrepared(): Database['prepared'] {
   return db.prepared;
 }
 
-function useDb(): Database['db'] {
+export function useDb(): Database['db'] {
   const db = React.useContext(DatabaseContext);
   invariant(db, '[use_db] must be used within a DatabaseProvider');
   return db.db;
 }
 
-function useDbOptions(): DatabaseQueryOptions {
+export function useDbOptions(): DatabaseQueryOptions {
   const client = React.useContext(DatabaseQueryOptionsContext);
   invariant(client, '[use_db_client] must be used within a DatabaseProvider');
   return client;
