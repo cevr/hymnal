@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "newArchEnabled": true,
     "web": {
-      "favicon": "./assets/web/favicon.ico"
+      "favicon": "./assets/favicon.ico"
     },
     "scheme": "hymnal",
     "experiments": {
@@ -14,7 +14,7 @@
     },
     "plugins": ["expo-sqlite", "expo-router", "expo-audio"],
     "orientation": "portrait",
-    "icon": "./assets/ios/AppIcon~ios-marketing.png",
+    "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/splash.png",
@@ -28,7 +28,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/android/play_store_512.png",
+        "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
       "package": "com.cev.hymnal"
