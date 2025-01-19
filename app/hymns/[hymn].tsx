@@ -1,8 +1,9 @@
 import { Icon } from '@roninoss/icons';
-import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
+import { queryOptions, useSuspenseQuery } from '@tanstack/react-query';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import * as React from 'react';
-import { ScrollView, View } from 'react-native';
+import { ErrorBoundary } from 'react-error-boundary';
+import { Platform, ScrollView, View } from 'react-native';
 
 import { Button } from '~/components/nativewindui/button';
 import { Slider } from '~/components/nativewindui/slider';
@@ -10,7 +11,12 @@ import { Text } from '~/components/nativewindui/text';
 import { ToggleFavoriteButton } from '~/features/hymns/toggle-favorite-button';
 import { useColorScheme } from '~/lib/use-color-scheme';
 
-import { Lyric, useHymn, useUpdateHymnViews } from '../../features/db/context';
+import {
+  Lyric,
+  useAudio,
+  useHymn,
+  useUpdateHymnViews,
+} from '../../features/db/context';
 
 export default function HymnScreen(): React.ReactElement {
   const params = useLocalSearchParams<{
@@ -40,16 +46,11 @@ export default function HymnScreen(): React.ReactElement {
         </React.Suspense>
         {/* above 695 is not music but call/response */}
         {id <= 695 ? (
-          <View
-            className="border-t border-gray-200"
-            style={{
-              backgroundColor: colors.background,
-            }}
-          >
+          <ErrorBoundary fallback={null}>
             <React.Suspense fallback={null}>
               <AudioPlayer id={id} />
             </React.Suspense>
-          </View>
+          </ErrorBoundary>
         ) : null}
       </View>
     </>
@@ -109,21 +110,18 @@ type AudioPlayerProps = {
 };
 
 export function AudioPlayer({ id }: AudioPlayerProps): React.ReactNode {
-  const player = useAudioPlayer(`https://cvr-hymns.s3.amazonaws.com/${id}.mp3`);
-  const status = useAudioPlayerStatus(player);
+  const player = useAudio(id);
   const { colors } = useColorScheme();
 
   return (
-    <View className="flex-row items-center justify-between p-4 pb-12">
+    <View className="flex-row items-center justify-between border-t-2 border-gray-200 bg-background p-4 pb-12 dark:border-gray-800">
       <View className="flex-1 flex-row items-center gap-4">
         <Button
           hitSlop={10}
           variant="plain"
-          onPress={() => {
-            status.playing ? player.pause() : player.play();
-          }}
+          onPress={player.playPause}
         >
-          {status.playing ? (
+          {player.status.isPlaying ? (
             <Icon
               name="pause"
               size={24}
@@ -141,21 +139,22 @@ export function AudioPlayer({ id }: AudioPlayerProps): React.ReactNode {
           style={{ flex: 1 }}
           minimumValue={0}
           maximumValue={1}
-          value={status.currentTime / status.duration}
+          value={player.position / (player.duration ?? 0)}
           onValueChange={(value) => {
-            player.seekTo(status.duration * value);
+            player.seekTo((player.duration ?? 0) * value);
           }}
         />
         <Text variant="subhead">
-          {secondsToMinutes(status.currentTime)} /{' '}
-          {secondsToMinutes(status.duration)}
+          {secondsToMinutes(player.position)} /{' '}
+          {secondsToMinutes(player.duration ?? 0)}
         </Text>
       </View>
     </View>
   );
 }
+
 function secondsToMinutes(seconds: number): string {
-  return `${Math.floor(seconds / 60)}:${Math.floor(seconds % 60)
-    .toString()
-    .padStart(2, '0')}`;
+  const minutes = Math.floor(seconds / 60000);
+  const remainingSeconds = Math.floor((seconds % 60000) / 1000);
+  return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
 }

@@ -12,7 +12,7 @@
       "tsconfigPaths": true,
       "reactCompiler": true
     },
-    "plugins": ["expo-sqlite", "expo-router", "expo-audio"],
+    "plugins": ["expo-sqlite", "expo-router"],
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",

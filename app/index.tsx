@@ -18,6 +18,7 @@ import {
 } from '~/components/nativewindui/list';
 import { Text } from '~/components/nativewindui/text';
 import {
+  AudioQueryOptions,
   Hymn,
   useCategories,
   useDbOptions,
@@ -141,6 +142,7 @@ function HymnList({
         viewableItems.forEach(({ item }) => {
           if (typeof item !== 'string') {
             client.prefetchQuery(options.hymn(item.id));
+            client.prefetchQuery(AudioQueryOptions(item.id));
           }
         });
       }}
