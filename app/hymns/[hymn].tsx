@@ -74,10 +74,10 @@ function HymnLyrics({ id }: { id: number }): React.ReactNode {
   const formattedLyrics = [verses[0], ...refrain, ...verses.slice(1)];
 
   return (
-    <ScrollView className="flex-1 gap-4 bg-white p-4">
+    <ScrollView className="flex-1 gap-4 bg-background p-4">
       <Text
         variant="title2"
-        className="mb-4 font-bold"
+        className="mb-4 font-bold text-foreground"
       >
         {hymn.name}
       </Text>
@@ -87,12 +87,17 @@ function HymnLyrics({ id }: { id: number }): React.ReactNode {
           className="mb-4 gap-1"
         >
           <Text
-            className="font-semibold"
+            className="font-semibold text-gray-600"
             variant="subhead"
           >
             {lyric.id === -1 ? 'Refrain' : `Verse ${lyric.id + 1}`}
           </Text>
-          <Text variant="body">{lyric.text}</Text>
+          <Text
+            className="text-foreground"
+            variant="body"
+          >
+            {lyric.text}
+          </Text>
         </View>
       ))}
     </ScrollView>
@@ -106,6 +111,7 @@ type AudioPlayerProps = {
 export function AudioPlayer({ id }: AudioPlayerProps): React.ReactNode {
   const player = useAudioPlayer(`https://cvr-hymns.s3.amazonaws.com/${id}.mp3`);
   const status = useAudioPlayerStatus(player);
+  const { colors } = useColorScheme();
 
   return (
     <View className="flex-row items-center justify-between p-4 pb-12">
@@ -121,13 +127,13 @@ export function AudioPlayer({ id }: AudioPlayerProps): React.ReactNode {
             <Icon
               name="pause"
               size={24}
-              color="#000"
+              color={colors.foreground}
             />
           ) : (
             <Icon
               name="play"
               size={24}
-              color="#000"
+              color={colors.foreground}
             />
           )}
         </Button>
