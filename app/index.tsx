@@ -39,7 +39,7 @@ export default function HymnsScreen(): React.ReactElement {
   return (
     <>
       <AdaptiveSearchHeader
-        iosTitle=""
+        iosTitle="Hymns"
         iosIsLargeTitle={false}
         shadowVisible={false}
         rightView={() => (

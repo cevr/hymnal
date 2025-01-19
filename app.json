@@ -5,36 +5,30 @@
     "version": "1.0.0",
     "newArchEnabled": true,
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/web/favicon.ico"
     },
     "scheme": "hymnal",
     "experiments": {
       "tsconfigPaths": true,
       "reactCompiler": true
     },
-    "plugins": [
-      "expo-sqlite",
-      "expo-router",
-      "expo-audio"
-    ],
+    "plugins": ["expo-sqlite", "expo-router", "expo-audio"],
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "icon": "./assets/ios/AppIcon~ios-marketing.png",
+    "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.cev.hymnal"
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/android/play_store_512.png",
         "backgroundColor": "#ffffff"
       },
       "package": "com.cev.hymnal"
