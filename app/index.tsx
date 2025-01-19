@@ -1,4 +1,5 @@
 import { Icon } from '@roninoss/icons';
+import { FlashList } from '@shopify/flash-list';
 import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { matchSorter } from 'match-sorter';
@@ -82,6 +83,7 @@ function HymnList({
   query: string;
   showFavorites: boolean;
 }) {
+  const listRef = React.useRef<FlashList<any>>(null);
   const client = useQueryClient();
   const options = useDbOptions();
 
@@ -104,6 +106,12 @@ function HymnList({
     acc[category.id] = 0;
     return acc;
   }, [] as number[]);
+
+  React.useEffect(() => {
+    if (query) {
+      listRef.current?.scrollToOffset({ offset: 0 });
+    }
+  }, [query]);
 
   const listData = filteredHymns.reduce((acc, hymn) => {
     const categoryCount = categoryMap[hymn.category_id];
@@ -136,6 +144,8 @@ function HymnList({
           }
         });
       }}
+      drawDistance={400}
+      ref={listRef}
     />
   );
 }
