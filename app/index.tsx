@@ -15,7 +15,6 @@ import {
 } from '~/components/nativewindui/list';
 import { SearchInput } from '~/components/nativewindui/search-input';
 import { Text } from '~/components/nativewindui/text';
-import { cache } from '~/features/cache';
 import { Hymn, useCategories, useHymns } from '~/features/db/context';
 import {
   ToggleFavoriteButton,

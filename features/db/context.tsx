@@ -28,23 +28,23 @@ const makeOptions = (client: QueryClient, database: Database) => {
   const options = {
     hymns: queryOptions({
       queryKey: ['hymns'],
-      queryFn: async () => await database.db.select().from(schema.hymns),
+      queryFn: async () => await database.prepared.get_all_hymns.execute(),
+      staleTime: Infinity,
     }),
 
     categories: queryOptions({
       queryKey: ['categories'],
-      queryFn: () => database.db.select().from(schema.categories),
+      queryFn: () => database.prepared.get_all_categories.execute(),
+      staleTime: Infinity,
     }),
 
     settings: queryOptions({
       queryKey: ['settings'],
       queryFn: async () => {
-        const res = await database.db
-          .select()
-          .from(schema.settings)
-          .where(eq(schema.settings.id, 1));
+        const res = await database.prepared.get_settings.execute();
         return res[0];
       },
+      staleTime: Infinity,
     }),
   };
 
@@ -63,7 +63,6 @@ export function DatabaseProvider({
   database: Database;
 }): React.ReactNode {
   const client = useQueryClient();
-
   const [options] = React.useState(() => makeOptions(client, database));
 
   return (
@@ -80,19 +79,13 @@ export type Lyric = Hymn['verses'][0];
 export type Category = InferSelectModel<typeof schema.categories>;
 export type Settings = InferSelectModel<typeof schema.settings>;
 
-function usePrepared(): Database['prepared'] {
-  const db = React.useContext(DatabaseContext);
-  invariant(db, '[use_prepared] must be used within a DatabaseProvider');
-  return db.prepared;
-}
-
-export function useDb(): Database['db'] {
+function useDb(): Database['db'] {
   const db = React.useContext(DatabaseContext);
   invariant(db, '[use_db] must be used within a DatabaseProvider');
   return db.db;
 }
 
-export function useDbOptions(): DatabaseQueryOptions {
+function useDbQueryOptions(): DatabaseQueryOptions {
   const client = React.useContext(DatabaseQueryOptionsContext);
   invariant(client, '[use_db_client] must be used within a DatabaseProvider');
   return client;
@@ -101,7 +94,7 @@ export function useDbOptions(): DatabaseQueryOptions {
 export function useUpdateHymnViews() {
   const db = useDb();
   const client = useQueryClient();
-  const options = useDbOptions();
+  const options = useDbQueryOptions();
   return async (id: number) => {
     await db
       .update(schema.hymns)
@@ -114,7 +107,7 @@ export function useUpdateHymnViews() {
 export function useToggleHymnFavorite(): (id: number) => Promise<void> {
   const db = useDb();
   const client = useQueryClient();
-  const options = useDbOptions();
+  const options = useDbQueryOptions();
   return async (id) => {
     client.setQueryData(options.hymns.queryKey, (old) => {
       if (!old) return old;
@@ -139,7 +132,7 @@ export function useUpdateSettings(): (
 ) => Promise<void> {
   const db = useDb();
   const client = useQueryClient();
-  const options = useDbOptions();
+  const options = useDbQueryOptions();
   return async (new_settings) => {
     client.setQueryData(options.settings.queryKey, (old) => {
       if (!old) return old;
@@ -154,23 +147,27 @@ export function useUpdateSettings(): (
 }
 
 export function useHymns(): Hymn[] {
-  const options = useDbOptions();
+  const options = useDbQueryOptions();
   return useSuspenseQuery(options.hymns).data;
 }
 
 export function useHymn(id: number): Hymn {
   const hymns = useHymns();
+  // basically since the hymns ids are their position in the array 1-indexed
+  // we can just subtract 1 to get the correct hymn
+  // this is because the hymns in the db are in that order
+  // so a bit of a hack but speeds things up
   const hymn = hymns[id - 1];
   invariant(hymn, `Hymn with id ${id} not found`);
   return hymn;
 }
 
 export function useCategories(): Category[] {
-  const options = useDbOptions();
+  const options = useDbQueryOptions();
   return useSuspenseQuery(options.categories).data;
 }
 
 export function useSettings(): Settings {
-  const options = useDbOptions();
+  const options = useDbQueryOptions();
   return useSuspenseQuery(options.settings).data;
 }

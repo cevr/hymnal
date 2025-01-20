@@ -10,7 +10,7 @@
     "scheme": "hymnal",
     "experiments": {
       "tsconfigPaths": true,
-      "reactCompiler": true
+      "reactCompiler": false
     },
     "plugins": [
       "expo-sqlite",
