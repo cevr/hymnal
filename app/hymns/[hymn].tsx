@@ -38,11 +38,9 @@ export default function HymnScreen(): React.ReactElement {
         <HymnLyrics id={id} />
         {/* above 695 is not music but call/response */}
         {id <= 695 ? (
-          <View>
-            <ErrorBoundary fallback={null}>
-              <AudioPlayer id={id} />
-            </ErrorBoundary>
-          </View>
+          <ErrorBoundary fallback={null}>
+            <AudioPlayer id={id} />
+          </ErrorBoundary>
         ) : null}
       </View>
     </>
