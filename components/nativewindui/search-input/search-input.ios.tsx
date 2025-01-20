@@ -2,25 +2,16 @@ import { useAugmentedRef, useControllableState } from '@rn-primitives/hooks';
 import { Icon } from '@roninoss/icons';
 import * as React from 'react';
 import {
-  Pressable,
   TextInput,
   View,
   ViewStyle,
   type NativeSyntheticEvent,
   type TextInputFocusEventData,
 } from 'react-native';
-import Animated, {
-  measure,
-  useAnimatedRef,
-  useAnimatedStyle,
-  useDerivedValue,
-  withTiming,
-} from 'react-native-reanimated';
 
 import { cn } from '~/lib/cn';
 import { useColorScheme } from '~/lib/use-color-scheme';
 
-import { Text } from '../text';
 import type { SearchInputProps } from './types';
 
 // Add as class when possible: https://github.com/marklawlor/nativewind/issues/522
@@ -50,65 +41,11 @@ const SearchInput = React.forwardRef<
     const { colors } = useColorScheme();
     const inputRef = useAugmentedRef({ ref, methods: { focus, blur, clear } });
     const [showCancel, setShowCancel] = React.useState(false);
-    const showCancelDerivedValue = useDerivedValue(
-      () => showCancel,
-      [showCancel],
-    );
-    const animatedRef = useAnimatedRef();
 
     const [value = '', onChangeText] = useControllableState({
       prop: valueProp,
       defaultProp: valueProp ?? '',
       onChange: onChangeTextProp,
-    });
-
-    const rootStyle = useAnimatedStyle(() => {
-      if (_WORKLET) {
-        // safely use measure
-        const measurement = measure(animatedRef);
-        return {
-          paddingRight: showCancelDerivedValue.value
-            ? withTiming(measurement?.width ?? cancelText.length * 11.2)
-            : withTiming(0),
-        };
-      }
-      return {
-        paddingRight: showCancelDerivedValue.value
-          ? withTiming(cancelText.length * 11.2)
-          : withTiming(0),
-      };
-    });
-    const buttonStyle3 = useAnimatedStyle(() => {
-      if (_WORKLET) {
-        // safely use measure
-        const measurement = measure(animatedRef);
-        return {
-          position: 'absolute',
-          right: 0,
-          opacity: showCancelDerivedValue.value ? withTiming(1) : withTiming(0),
-          transform: [
-            {
-              translateX: showCancelDerivedValue.value
-                ? withTiming(0)
-                : measurement?.width
-                  ? withTiming(measurement.width)
-                  : cancelText.length * 11.2,
-            },
-          ],
-        };
-      }
-      return {
-        position: 'absolute',
-        right: 0,
-        opacity: showCancelDerivedValue.value ? withTiming(1) : withTiming(0),
-        transform: [
-          {
-            translateX: showCancelDerivedValue.value
-              ? withTiming(0)
-              : withTiming(cancelText.length * 11.2),
-          },
-        ],
-      };
     });
 
     function focus() {
@@ -129,11 +66,8 @@ const SearchInput = React.forwardRef<
     }
 
     return (
-      <Animated.View
-        className="flex-row items-center"
-        style={rootStyle}
-      >
-        <Animated.View
+      <View className="flex-row items-center">
+        <View
           style={BORDER_CURVE}
           className={cn(
             'flex-1 flex-row rounded-lg bg-card',
@@ -167,26 +101,8 @@ const SearchInput = React.forwardRef<
             role="searchbox"
             {...props}
           />
-        </Animated.View>
-        <Animated.View
-          ref={animatedRef}
-          style={buttonStyle3}
-          pointerEvents={!showCancel ? 'none' : 'auto'}
-        >
-          <Pressable
-            onPress={() => {
-              onChangeText('');
-              inputRef.current?.blur();
-              setShowCancel(false);
-            }}
-            disabled={!showCancel}
-            pointerEvents={!showCancel ? 'none' : 'auto'}
-            className="flex-1 justify-center active:opacity-50"
-          >
-            <Text className="px-2 text-primary">{cancelText}</Text>
-          </Pressable>
-        </Animated.View>
-      </Animated.View>
+        </View>
+      </View>
     );
   },
 );
