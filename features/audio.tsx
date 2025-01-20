@@ -12,8 +12,6 @@ export const AudioSetupQueryOptions = queryOptions({
       shouldPlayInBackground: true,
       playsInSilentMode: true,
       interruptionMode: 'doNotMix',
-      allowsRecording: true,
-      shouldRouteThroughEarpiece: false,
     });
     return true;
   },
