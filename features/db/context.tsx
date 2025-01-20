@@ -5,15 +5,13 @@ import {
   useSuspenseQuery,
 } from '@tanstack/react-query';
 import { eq, InferSelectModel, sql } from 'drizzle-orm';
-import { Audio, AVPlaybackStatusSuccess } from 'expo-av';
 import * as React from 'react';
-import { Platform } from 'react-native';
 
 import { invariant } from '../utils';
 import { initDatabase } from './config';
 import * as schema from './schema';
 
-const DatabaseOptions = queryOptions({
+export const DatabaseQueryOptions = queryOptions({
   queryKey: ['database'],
   queryFn: initDatabase,
   staleTime: Infinity,
@@ -70,16 +68,17 @@ const makeOptions = (client: QueryClient, database: Database) => {
 
 export function DatabaseProvider({
   children,
+  database,
 }: {
   children: React.ReactNode;
+  database: Database;
 }): React.ReactNode {
   const client = useQueryClient();
-  const { data } = useSuspenseQuery(DatabaseOptions);
 
-  const [options] = React.useState(() => makeOptions(client, data));
+  const [options] = React.useState(() => makeOptions(client, database));
 
   return (
-    <DatabaseContext.Provider value={data}>
+    <DatabaseContext.Provider value={database}>
       <DatabaseQueryOptionsContext.Provider value={options}>
         {children}
       </DatabaseQueryOptionsContext.Provider>
@@ -189,65 +188,4 @@ export function useCategories(): Category[] {
 export function useSettings(): Settings {
   const options = useDbOptions();
   return useSuspenseQuery(options.settings).data;
-}
-
-export const AudioQueryOptions = (id: number) =>
-  queryOptions({
-    queryKey: ['audio', id],
-    queryFn: async () => {
-      const { sound } = await Audio.Sound.createAsync(
-        { uri: `https://cvr-hymns.s3.amazonaws.com/${id}.mp3` },
-        {},
-      );
-      const status = await sound.getStatusAsync();
-      if ('error' in status) {
-        throw new Error(status.error);
-      }
-      return {
-        player: sound,
-        status: status as AVPlaybackStatusSuccess,
-      };
-    },
-    staleTime: Infinity,
-  });
-
-export function useAudio(id: number) {
-  const data = useSuspenseQuery(AudioQueryOptions(id)).data;
-  const [status, setStatus] = React.useState(data.status);
-
-  React.useEffect(() => {
-    data.player.setOnPlaybackStatusUpdate((status) => {
-      if ('error' in status) {
-        throw new Error(status.error);
-      }
-      setStatus(status as AVPlaybackStatusSuccess);
-    });
-    return () => {
-      data.player.unloadAsync();
-    };
-  }, []);
-
-  return {
-    playPause: async () => {
-      if (status.isPlaying) {
-        await data.player.pauseAsync();
-      } else {
-        await data.player.playAsync();
-      }
-    },
-    seekTo: async (position: number) => {
-      await data.player.setPositionAsync(
-        Platform.OS === 'ios' ? position : position * 1000,
-      );
-    },
-    position:
-      Platform.OS === 'ios'
-        ? status.positionMillis
-        : status.positionMillis / 1000,
-    duration:
-      Platform.OS === 'ios'
-        ? (status.durationMillis ?? 0)
-        : (status.durationMillis ?? 0) / 1000,
-    status,
-  };
 }

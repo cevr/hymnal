@@ -1,22 +1,17 @@
 import { Icon } from '@roninoss/icons';
-import { queryOptions, useSuspenseQuery } from '@tanstack/react-query';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import * as React from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
-import { Platform, ScrollView, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 
 import { Button } from '~/components/nativewindui/button';
 import { Slider } from '~/components/nativewindui/slider';
 import { Text } from '~/components/nativewindui/text';
+import { useAudio } from '~/features/audio';
 import { ToggleFavoriteButton } from '~/features/hymns/toggle-favorite-button';
 import { useColorScheme } from '~/lib/use-color-scheme';
 
-import {
-  Lyric,
-  useAudio,
-  useHymn,
-  useUpdateHymnViews,
-} from '../../features/db/context';
+import { Lyric, useHymn, useUpdateHymnViews } from '../../features/db/context';
 
 export default function HymnScreen(): React.ReactElement {
   const params = useLocalSearchParams<{
@@ -88,7 +83,7 @@ function HymnLyrics({ id }: { id: number }): React.ReactNode {
           className="mb-4 gap-1"
         >
           <Text
-            className="font-semibold text-gray-600"
+            className="font-semibold text-gray-600 dark:text-gray-400"
             variant="subhead"
           >
             {lyric.id === -1 ? 'Refrain' : `Verse ${lyric.id + 1}`}

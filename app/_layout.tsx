@@ -9,7 +9,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 
-import { DatabaseProvider } from '~/features/db/context';
+import { RootProvider } from '~/features/root-provider';
 import {
   useColorScheme,
   useInitialAndroidBarSync,
@@ -36,7 +36,7 @@ export default function RootLayout() {
 
       <NavThemeProvider value={NAV_THEME[colorScheme]}>
         <QueryClientProvider client={queryClient}>
-          <DatabaseProvider>
+          <RootProvider>
             <Stack
               screenOptions={{
                 headerStyle: {
@@ -45,7 +45,7 @@ export default function RootLayout() {
               }}
             />
             <PortalHost />
-          </DatabaseProvider>
+          </RootProvider>
         </QueryClientProvider>
       </NavThemeProvider>
     </>

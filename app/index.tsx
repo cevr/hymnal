@@ -17,8 +17,8 @@ import {
   ListSectionHeader,
 } from '~/components/nativewindui/list';
 import { Text } from '~/components/nativewindui/text';
+import { AudioQueryOptions } from '~/features/audio';
 import {
-  AudioQueryOptions,
   Hymn,
   useCategories,
   useDbOptions,
