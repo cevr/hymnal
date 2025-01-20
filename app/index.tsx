@@ -18,6 +18,7 @@ import {
 } from '~/components/nativewindui/list';
 import { Text } from '~/components/nativewindui/text';
 import { AudioQueryOptions } from '~/features/audio';
+import { cache } from '~/features/cache';
 import {
   Hymn,
   useCategories,
@@ -85,9 +86,6 @@ function HymnList({
   showFavorites: boolean;
 }) {
   const listRef = React.useRef<FlashList<any>>(null);
-  const client = useQueryClient();
-  const options = useDbOptions();
-
   const categories = useCategories();
   const hymns = useHymns();
 
@@ -138,14 +136,6 @@ function HymnList({
       renderItem={renderItem}
       ListEmptyComponent={ListEmptyComponent}
       keyExtractor={keyExtractor}
-      onViewableItemsChanged={({ viewableItems }) => {
-        viewableItems.forEach(({ item }) => {
-          if (typeof item !== 'string') {
-            client.prefetchQuery(options.hymn(item.id));
-            client.prefetchQuery(AudioQueryOptions(item.id));
-          }
-        });
-      }}
       drawDistance={400}
       ref={listRef}
     />
@@ -186,7 +176,10 @@ function renderItem(info: ListRenderItemInfo<ListItem>) {
         </React.Suspense>
       }
       {...info}
-      onPress={() => router.push(`/hymns/${item.id}`)}
+      onPress={() => {
+        cache.prefetchQuery(AudioQueryOptions(item.id));
+        router.push(`/hymns/${item.id}`);
+      }}
     />
   );
 }

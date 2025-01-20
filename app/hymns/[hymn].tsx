@@ -42,9 +42,9 @@ export default function HymnScreen(): React.ReactElement {
         {/* above 695 is not music but call/response */}
         {id <= 695 ? (
           <ErrorBoundary fallback={null}>
-            <React.Suspense fallback={null}>
+            <View className="bg-background">
               <AudioPlayer id={id} />
-            </React.Suspense>
+            </View>
           </ErrorBoundary>
         ) : null}
       </View>
@@ -70,7 +70,7 @@ function HymnLyrics({ id }: { id: number }): React.ReactNode {
   const formattedLyrics = [verses[0], ...refrain, ...verses.slice(1)];
 
   return (
-    <ScrollView className="flex-1 gap-4 bg-background p-4">
+    <ScrollView className="flex-1 gap-4 bg-card p-4">
       <Text
         variant="title2"
         className="mb-4 font-bold text-foreground"

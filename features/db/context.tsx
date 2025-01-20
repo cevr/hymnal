@@ -30,17 +30,6 @@ const makeOptions = (client: QueryClient, database: Database) => {
       queryKey: ['hymns'],
       queryFn: async () => await database.db.select().from(schema.hymns),
     }),
-    hymn: (id: number) =>
-      queryOptions({
-        queryKey: ['hymn', id],
-        queryFn: async () => {
-          const res = await database.db
-            .select()
-            .from(schema.hymns)
-            .where(eq(schema.hymns.id, id));
-          return res[0];
-        },
-      }),
 
     categories: queryOptions({
       queryKey: ['categories'],
@@ -118,7 +107,6 @@ export function useUpdateHymnViews() {
       .update(schema.hymns)
       .set({ views: sql`${schema.hymns.views} + 1` })
       .where(eq(schema.hymns.id, id));
-    client.invalidateQueries(options.hymn(id));
     client.invalidateQueries(options.hymns);
   };
 }
@@ -128,10 +116,6 @@ export function useToggleHymnFavorite(): (id: number) => Promise<void> {
   const client = useQueryClient();
   const options = useDbOptions();
   return async (id) => {
-    client.setQueryData(options.hymn(id).queryKey, (old) => {
-      if (!old) return old;
-      return { ...old, favorite: old.favorite === 1 ? 0 : 1 };
-    });
     client.setQueryData(options.hymns.queryKey, (old) => {
       if (!old) return old;
       return old.map((hymn) =>
@@ -146,7 +130,6 @@ export function useToggleHymnFavorite(): (id: number) => Promise<void> {
         favorite: sql`NOT ${schema.hymns.favorite}`,
       })
       .where(eq(schema.hymns.id, id));
-    client.invalidateQueries(options.hymn(id));
     client.invalidateQueries(options.hymns);
   };
 }
@@ -176,8 +159,10 @@ export function useHymns(): Hymn[] {
 }
 
 export function useHymn(id: number): Hymn {
-  const options = useDbOptions();
-  return useSuspenseQuery(options.hymn(id)).data;
+  const hymns = useHymns();
+  const hymn = hymns[id - 1];
+  invariant(hymn, `Hymn with id ${id} not found`);
+  return hymn;
 }
 
 export function useCategories(): Category[] {

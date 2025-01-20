@@ -1,4 +1,8 @@
-import { queryOptions, useSuspenseQuery } from '@tanstack/react-query';
+import {
+  queryOptions,
+  useQuery,
+  useSuspenseQuery,
+} from '@tanstack/react-query';
 import {
   Audio,
   AVPlaybackStatusSuccess,
@@ -49,31 +53,47 @@ export const AudioQueryOptions = (id: number) =>
   });
 
 export function useAudio(id: number) {
-  const data = useSuspenseQuery(AudioQueryOptions(id)).data;
-  const [status, setStatus] = React.useState(data.status);
+  const { data } = useQuery(AudioQueryOptions(id));
+  const [status, setStatus] = React.useState(
+    data?.status ?? {
+      isBuffering: true,
+      isLoaded: false,
+      isPlaying: false,
+      positionMillis: 0,
+      durationMillis: 0,
+    },
+  );
 
   React.useEffect(() => {
-    data.player.setOnPlaybackStatusUpdate((status) => {
+    if (data) {
+      setStatus(data?.status);
+    }
+  }, [data]);
+
+  React.useEffect(() => {
+    data?.player.setOnPlaybackStatusUpdate((status) => {
       if ('error' in status) {
         throw new Error(status.error);
       }
       setStatus(status as AVPlaybackStatusSuccess);
     });
     return () => {
-      data.player.unloadAsync();
+      data?.player.unloadAsync();
     };
-  }, []);
+  }, [data]);
 
   return {
     playPause: async () => {
-      if (status.isPlaying) {
-        await data.player.pauseAsync();
-      } else {
-        await data.player.playAsync();
+      if (!status.isBuffering) {
+        if (status.isPlaying) {
+          await data?.player.pauseAsync();
+        } else {
+          await data?.player.playAsync();
+        }
       }
     },
     seekTo: async (position: number) => {
-      await data.player.setPositionAsync(
+      await data?.player.setPositionAsync(
         Platform.OS === 'ios' ? position : position * 1000,
       );
     },
