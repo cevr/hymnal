@@ -11,13 +11,12 @@ import { useAudio } from '~/features/audio';
 import { ToggleFavoriteButton } from '~/features/hymns/toggle-favorite-button';
 import { useColorScheme } from '~/lib/use-color-scheme';
 
-import { Lyric, useHymn, useUpdateHymnViews } from '../../features/db/context';
+import { useHymn, useUpdateHymnViews } from '../../features/db/context';
 
 export default function HymnScreen(): React.ReactElement {
   const params = useLocalSearchParams<{
     hymn: string;
   }>();
-  const { colors } = useColorScheme();
 
   const handleViewUpdate = useUpdateHymnViews();
 
@@ -52,22 +51,52 @@ export default function HymnScreen(): React.ReactElement {
   );
 }
 
+type Refrain = {
+  id: number;
+  text: string;
+  type: 'refrain';
+};
+
+type Verse = {
+  id: number;
+  text: string;
+  type: 'verse';
+};
+
+type Lyric = Refrain | Verse;
+
 function HymnLyrics({ id }: { id: number }): React.ReactNode {
   const hymn = useHymn(id);
 
-  const { refrain, verses } = hymn.verses.reduce(
+  const { refrains: refrains, verses } = hymn.verses.reduce(
     (acc, lyric) => {
-      if (lyric.id === -1) {
-        acc.refrain.push(lyric);
+      if (lyric.id < 0) {
+        acc.refrains.push({
+          id: lyric.id,
+          text: lyric.text,
+          type: 'refrain',
+        });
       } else {
-        acc.verses.push(lyric);
+        acc.verses.push({
+          id: lyric.id,
+          text: lyric.text,
+          type: 'verse',
+        });
       }
       return acc;
     },
-    { refrain: [] as Lyric[], verses: [] as Lyric[] },
+    { refrains: [] as Lyric[], verses: [] as Lyric[] },
   );
 
-  const formattedLyrics = [verses[0], ...refrain, ...verses.slice(1)];
+  // interleave verses and refrains
+  const interleaved = verses.reduce((acc, verse, index) => {
+    acc.push(verse);
+    const refrain = refrains[index];
+    if (refrain) {
+      acc.push(refrain);
+    }
+    return acc;
+  }, [] as Lyric[]);
 
   return (
     <ScrollView className="flex-1 gap-4 bg-card p-4">
@@ -77,7 +106,7 @@ function HymnLyrics({ id }: { id: number }): React.ReactNode {
       >
         {hymn.name}
       </Text>
-      {formattedLyrics.map((lyric, index) => (
+      {interleaved.map((lyric, index) => (
         <View
           key={index}
           className="mb-4 gap-1"
@@ -86,7 +115,11 @@ function HymnLyrics({ id }: { id: number }): React.ReactNode {
             className="font-semibold text-gray-600 dark:text-gray-400"
             variant="subhead"
           >
-            {lyric.id === -1 ? 'Refrain' : `Verse ${lyric.id + 1}`}
+            {lyric.type === 'refrain'
+              ? refrains.length > 1
+                ? `Refrain ${Math.abs(lyric.id)}`
+                : 'Refrain'
+              : `Verse ${lyric.id + 1}`}
           </Text>
           <Text
             className="text-foreground"
