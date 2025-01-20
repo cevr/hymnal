@@ -35,16 +35,14 @@ export default function HymnScreen(): React.ReactElement {
         }}
       />
       <View className="flex-1">
-        <React.Suspense fallback={null}>
-          <HymnLyrics id={id} />
-        </React.Suspense>
+        <HymnLyrics id={id} />
         {/* above 695 is not music but call/response */}
         {id <= 695 ? (
-          <ErrorBoundary fallback={null}>
-            <View className="bg-background">
+          <View>
+            <ErrorBoundary fallback={null}>
               <AudioPlayer id={id} />
-            </View>
-          </ErrorBoundary>
+            </ErrorBoundary>
+          </View>
         ) : null}
       </View>
     </>
@@ -138,51 +136,47 @@ type AudioPlayerProps = {
 };
 
 export function AudioPlayer({ id }: AudioPlayerProps): React.ReactNode {
-  const player = useAudio(id);
+  const { player, status } = useAudio(id);
   const { colors } = useColorScheme();
 
   return (
-    <View className="flex-row items-center justify-between border-t-2 border-gray-200 bg-background p-4 pb-12 dark:border-gray-800">
-      <View className="flex-1 flex-row items-center gap-4">
-        <Button
-          hitSlop={10}
-          variant="plain"
-          onPress={player.playPause}
-        >
-          {player.status.isPlaying ? (
-            <Icon
-              name="pause"
-              size={24}
-              color={colors.foreground}
-            />
-          ) : (
-            <Icon
-              name="play"
-              size={24}
-              color={colors.foreground}
-            />
-          )}
-        </Button>
-        <Slider
-          style={{ flex: 1 }}
-          minimumValue={0}
-          maximumValue={1}
-          value={player.position / (player.duration ?? 0)}
-          onValueChange={(value) => {
-            player.seekTo((player.duration ?? 0) * value);
-          }}
+    <View className="flex-row items-center justify-between gap-4 border-t-2 border-gray-200 bg-background p-4 pb-12 dark:border-gray-800">
+      <Button
+        hitSlop={10}
+        variant="plain"
+        onPress={() => {
+          if (status.playing) {
+            player.pause();
+          } else {
+            player.play();
+          }
+        }}
+      >
+        <Icon
+          name={status.playing ? 'pause' : 'play'}
+          size={24}
+          color={colors.foreground}
         />
-        <Text variant="subhead">
-          {secondsToMinutes(player.position)} /{' '}
-          {secondsToMinutes(player.duration ?? 0)}
-        </Text>
-      </View>
+      </Button>
+      <Slider
+        style={{ flex: 1 }}
+        minimumValue={0}
+        maximumValue={1}
+        value={status.currentTime / status.duration}
+        onValueChange={(value) => {
+          player.seekTo(status.duration * value);
+        }}
+      />
+      <Text variant="subhead">
+        {secondsToMinutes(player.currentTime)} /{' '}
+        {secondsToMinutes(player.duration)}
+      </Text>
     </View>
   );
 }
 
 function secondsToMinutes(seconds: number): string {
-  const minutes = Math.floor(seconds / 60000);
-  const remainingSeconds = Math.floor((seconds % 60000) / 1000);
-  return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  return `${Math.floor(seconds / 60)}:${Math.floor(seconds % 60)
+    .toString()
+    .padStart(2, '0')}`;
 }

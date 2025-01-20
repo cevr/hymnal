@@ -1,110 +1,31 @@
+import { queryOptions } from '@tanstack/react-query';
 import {
-  queryOptions,
-  useQuery,
-  useSuspenseQuery,
-} from '@tanstack/react-query';
-import {
-  Audio,
-  AVPlaybackStatusSuccess,
-  InterruptionModeAndroid,
-  InterruptionModeIOS,
-} from 'expo-av';
-import * as React from 'react';
-import { Platform } from 'react-native';
+  setAudioModeAsync,
+  useAudioPlayer,
+  useAudioPlayerStatus,
+} from 'expo-audio';
 
 export const AudioSetupQueryOptions = queryOptions({
   queryKey: ['audio_setup'],
   queryFn: async () => {
-    await Audio.setAudioModeAsync({
-      allowsRecordingIOS: false,
-      staysActiveInBackground: true,
-      interruptionModeIOS: InterruptionModeIOS.MixWithOthers,
-      playsInSilentModeIOS: true,
-      interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
-      shouldDuckAndroid: true,
-      playThroughEarpieceAndroid: false,
+    await setAudioModeAsync({
+      shouldPlayInBackground: true,
+      playsInSilentMode: true,
+      interruptionMode: 'doNotMix',
+      shouldRouteThroughEarpiece: true,
+      allowsRecording: true,
     });
     return true;
   },
   staleTime: Infinity,
 });
 
-export const AudioQueryOptions = (id: number) =>
-  queryOptions({
-    queryKey: ['audio', id],
-    queryFn: async () => {
-      const { sound } = await Audio.Sound.createAsync(
-        { uri: `https://cvr-hymns.s3.amazonaws.com/${id}.mp3` },
-        {
-          shouldPlay: false,
-          isLooping: false,
-        },
-      );
-      const status = await sound.getStatusAsync();
-      if ('error' in status) {
-        throw new Error(status.error);
-      }
-      return {
-        player: sound,
-        status: status as AVPlaybackStatusSuccess,
-      };
-    },
-    staleTime: Infinity,
-  });
-
 export function useAudio(id: number) {
-  const { data } = useQuery(AudioQueryOptions(id));
-  const [status, setStatus] = React.useState(
-    data?.status ?? {
-      isBuffering: true,
-      isLoaded: false,
-      isPlaying: false,
-      positionMillis: 0,
-      durationMillis: 0,
-    },
-  );
-
-  React.useEffect(() => {
-    if (data) {
-      setStatus(data?.status);
-    }
-  }, [data]);
-
-  React.useEffect(() => {
-    data?.player.setOnPlaybackStatusUpdate((status) => {
-      if ('error' in status) {
-        throw new Error(status.error);
-      }
-      setStatus(status as AVPlaybackStatusSuccess);
-    });
-    return () => {
-      data?.player.unloadAsync();
-    };
-  }, [data]);
+  const player = useAudioPlayer(`https://cvr-hymns.s3.amazonaws.com/${id}.mp3`);
+  const status = useAudioPlayerStatus(player);
 
   return {
-    playPause: async () => {
-      if (!status.isBuffering) {
-        if (status.isPlaying) {
-          await data?.player.pauseAsync();
-        } else {
-          await data?.player.playAsync();
-        }
-      }
-    },
-    seekTo: async (position: number) => {
-      await data?.player.setPositionAsync(
-        Platform.OS === 'ios' ? position : position * 1000,
-      );
-    },
-    position:
-      Platform.OS === 'ios'
-        ? status.positionMillis
-        : status.positionMillis / 1000,
-    duration:
-      Platform.OS === 'ios'
-        ? (status.durationMillis ?? 0)
-        : (status.durationMillis ?? 0) / 1000,
+    player,
     status,
   };
 }

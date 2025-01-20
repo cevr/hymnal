@@ -1,6 +1,5 @@
 import { Icon } from '@roninoss/icons';
 import { FlashList } from '@shopify/flash-list';
-import { useQueryClient } from '@tanstack/react-query';
 import { router, Stack } from 'expo-router';
 import { matchSorter } from 'match-sorter';
 import * as React from 'react';
@@ -16,7 +15,6 @@ import {
 } from '~/components/nativewindui/list';
 import { SearchInput } from '~/components/nativewindui/search-input';
 import { Text } from '~/components/nativewindui/text';
-import { AudioQueryOptions } from '~/features/audio';
 import { cache } from '~/features/cache';
 import { Hymn, useCategories, useHymns } from '~/features/db/context';
 import {
@@ -58,7 +56,7 @@ export default function HymnsScreen(): React.ReactElement {
           <SearchInput
             onChangeText={setQuery}
             autoComplete="off"
-            textContentType='none'
+            textContentType="none"
           />
         </View>
         <HymnList
@@ -192,7 +190,6 @@ function renderItem(info: ListRenderItemInfo<ListItem>) {
       }
       {...info}
       onPress={() => {
-        cache.prefetchQuery(AudioQueryOptions(item.id));
         router.push(`/hymns/${item.id}`);
       }}
     />
