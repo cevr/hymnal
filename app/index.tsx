@@ -1,13 +1,11 @@
 import { Icon } from '@roninoss/icons';
 import { FlashList } from '@shopify/flash-list';
 import { useQueryClient } from '@tanstack/react-query';
-import { router } from 'expo-router';
+import { router, Stack } from 'expo-router';
 import { matchSorter } from 'match-sorter';
 import * as React from 'react';
 import { View } from 'react-native';
 
-import { AdaptiveSearchHeader } from '~/components/nativewindui/adaptive-search-header';
-import { AdaptiveSearchBarRef } from '~/components/nativewindui/adaptive-search-header/types';
 import { Button } from '~/components/nativewindui/button';
 import {
   ESTIMATED_ITEM_HEIGHT,
@@ -16,15 +14,11 @@ import {
   ListRenderItemInfo,
   ListSectionHeader,
 } from '~/components/nativewindui/list';
+import { SearchInput } from '~/components/nativewindui/search-input';
 import { Text } from '~/components/nativewindui/text';
 import { AudioQueryOptions } from '~/features/audio';
 import { cache } from '~/features/cache';
-import {
-  Hymn,
-  useCategories,
-  useDbOptions,
-  useHymns,
-} from '~/features/db/context';
+import { Hymn, useCategories, useHymns } from '~/features/db/context';
 import {
   ToggleFavoriteButton,
   ToggleFavoriteButtonFallback,
@@ -33,47 +27,45 @@ import { useColorScheme } from '~/lib/use-color-scheme';
 
 export default function HymnsScreen(): React.ReactElement {
   const { colors } = useColorScheme();
-  const searchBarRef = React.useRef<AdaptiveSearchBarRef>(null);
   const [showFavorites, setShowFavorites] = React.useState<boolean>(false);
   const [query, setQuery] = React.useState<string>('');
   const deferredQuery = React.useDeferredValue(query);
 
   return (
     <>
-      <AdaptiveSearchHeader
-        iosTitle="Hymns"
-        iosIsLargeTitle={false}
-        shadowVisible={false}
-        rightView={() => (
-          <Button
-            variant="plain"
-            size="icon"
-            onPress={() => setShowFavorites(!showFavorites)}
-            hitSlop={20}
-          >
-            <Icon
-              size={28}
-              name={showFavorites ? 'heart' : 'heart-outline'}
-              color={showFavorites ? colors.primary : colors.grey}
-            />
-          </Button>
-        )}
-        searchBar={{
-          ref: searchBarRef,
-          iosCancelButtonText: 'Cancel',
-          onChangeText: (text) => {
-            setQuery(text);
-          },
-          onBlur: () => {
-            searchBarRef.current?.cancelSearch();
-          },
-          placeholder: 'Search hymns...',
+      <Stack.Screen
+        options={{
+          title: 'Hymns',
+          headerShadowVisible: false,
+          headerRight: () => (
+            <Button
+              variant="plain"
+              size="icon"
+              onPress={() => setShowFavorites(!showFavorites)}
+              hitSlop={20}
+            >
+              <Icon
+                size={28}
+                name={showFavorites ? 'heart' : 'heart-outline'}
+                color={showFavorites ? colors.primary : colors.grey}
+              />
+            </Button>
+          ),
         }}
       />
-      <HymnList
-        query={deferredQuery}
-        showFavorites={showFavorites}
-      />
+      <View className="flex-1 gap-2">
+        <View className="bg-background p-2 px-4">
+          <SearchInput
+            onChangeText={setQuery}
+            autoComplete="off"
+            textContentType='none'
+          />
+        </View>
+        <HymnList
+          query={deferredQuery}
+          showFavorites={showFavorites}
+        />
+      </View>
     </>
   );
 }
@@ -82,7 +74,7 @@ function HymnList({
   query,
   showFavorites,
 }: {
-  query: string;
+  query: string | null;
   showFavorites: boolean;
 }) {
   const listRef = React.useRef<FlashList<any>>(null);
@@ -100,7 +92,6 @@ function HymnList({
       keys: ['id', 'name'],
     });
   }
-
   const categoryMap = categories.reduce((acc, category) => {
     acc[category.id] = 0;
     return acc;
@@ -134,7 +125,39 @@ function HymnList({
       data={listData}
       estimatedItemSize={ESTIMATED_ITEM_HEIGHT.withSubTitle}
       renderItem={renderItem}
-      ListEmptyComponent={ListEmptyComponent}
+      ListEmptyComponent={() => {
+        if (showFavorites && query) {
+          return (
+            <View className="flex-1 items-center justify-center">
+              <Text className="text-lg">No favourites with this query</Text>
+            </View>
+          );
+        }
+        if (showFavorites) {
+          return (
+            <View className="flex-1 items-center justify-center">
+              <Text className="text-lg">No favourites yet. Add some!</Text>
+            </View>
+          );
+        }
+
+        if (query) {
+          return (
+            <View className="flex-1 items-center justify-center">
+              <Text className="text-lg">No hymns found</Text>
+            </View>
+          );
+        }
+        if (filteredHymns.length === 0) {
+          return (
+            <View className="flex-1 items-center justify-center">
+              <Text className="text-lg">
+                Enter a search query to find hymns
+              </Text>
+            </View>
+          );
+        }
+      }}
       keyExtractor={keyExtractor}
       drawDistance={400}
       ref={listRef}
@@ -153,14 +176,6 @@ type ListItem =
 
 function keyExtractor(item: { id: number } | string) {
   return typeof item === 'string' ? item : item.id.toString();
-}
-
-function ListEmptyComponent() {
-  return (
-    <View className="flex-1 items-center justify-center">
-      <Text className="text-lg">No hymns found</Text>
-    </View>
-  );
 }
 
 function renderItem(info: ListRenderItemInfo<ListItem>) {
