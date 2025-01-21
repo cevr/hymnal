@@ -34,7 +34,7 @@ Since we don't collect any personal information, there is no personal data to ac
 
 ## Contact Us
 If you have any questions about this Privacy Policy, please contact us at:
-[Your Contact Information]
+hello@cvr.im
 
 ## Consent
 By using our app, you consent to our Privacy Policy and agree to its terms.
