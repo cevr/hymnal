@@ -30,7 +30,8 @@
       },
       "entitlements": {
         "aps-environment": "development"
-      }
+      },
+      "appStoreUrl": "https://apps.apple.com/us/app/simple-sda-hymnal/6740750691"
     },
     "android": {
       "adaptiveIcon": {
