@@ -67,7 +67,7 @@ export default function HymnsScreen(): React.ReactElement {
   );
 }
 
-function HymnList({
+const HymnList = React.memo(function HymnList({
   query,
   showFavorites,
 }: {
@@ -160,7 +160,7 @@ function HymnList({
       ref={listRef}
     />
   );
-}
+});
 
 type ListItem =
   | {

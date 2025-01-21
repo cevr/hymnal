@@ -28,7 +28,7 @@ export default function HymnScreen(): React.ReactElement {
   return (
     <View className="flex-1">
       <HymnLyrics id={id} />
-      {/* above 695 is not music but call/response */}
+      {/* above 695 is not music but call/response/verses */}
       {id <= 695 ? (
         <ErrorBoundary fallback={null}>
           <AudioPlayer id={id} />
@@ -52,7 +52,11 @@ type Verse = {
 
 type Lyric = Refrain | Verse;
 
-function HymnLyrics({ id }: { id: number }): React.ReactNode {
+const HymnLyrics = React.memo(function HymnLyrics({
+  id,
+}: {
+  id: number;
+}): React.ReactNode {
   const hymn = useHymn(id);
 
   const { refrains: refrains, verses } = hymn.verses.reduce(
@@ -118,13 +122,15 @@ function HymnLyrics({ id }: { id: number }): React.ReactNode {
       ))}
     </ScrollView>
   );
-}
+});
 
 type AudioPlayerProps = {
   id: number;
 };
 
-export function AudioPlayer({ id }: AudioPlayerProps): React.ReactNode {
+const AudioPlayer = React.memo(function AudioPlayer({
+  id,
+}: AudioPlayerProps): React.ReactNode {
   const { player, status } = useAudio(id);
   const { colors } = useColorScheme();
 
@@ -162,7 +168,7 @@ export function AudioPlayer({ id }: AudioPlayerProps): React.ReactNode {
       </Text>
     </View>
   );
-}
+});
 
 function secondsToMinutes(seconds: number): string {
   return `${Math.floor(seconds / 60)}:${Math.floor(seconds % 60)
