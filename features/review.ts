@@ -3,13 +3,17 @@ import * as React from 'react';
 
 import { useGetTotalHymnViews } from './db/context';
 
-export function usePromptReview(): void {
+export function Reviewer(): React.ReactNode {
   const getViews = useGetTotalHymnViews();
 
   React.useEffect(() => {
     async function showRequestReview() {
+      const [can, views] = await Promise.all([
+        StoreReview.hasAction(),
+        getViews(),
+      ]);
       try {
-        if ((await StoreReview.hasAction()) && (await getViews()) >= 50) {
+        if (can && views >= 50) {
           await StoreReview.requestReview();
         }
       } catch (error) {
@@ -26,4 +30,6 @@ export function usePromptReview(): void {
 
     return () => clearTimeout(timeout);
   }, []);
+
+  return null;
 }

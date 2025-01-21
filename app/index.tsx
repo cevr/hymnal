@@ -20,6 +20,7 @@ import {
   ToggleFavoriteButton,
   ToggleFavoriteButtonFallback,
 } from '~/features/hymns/toggle-favorite-button';
+import { Reviewer } from '~/features/review';
 import { useColorScheme } from '~/lib/use-color-scheme';
 
 export default function HymnsScreen(): React.ReactElement {
@@ -50,6 +51,7 @@ export default function HymnsScreen(): React.ReactElement {
           ),
         }}
       />
+      <Reviewer />
       <View className="flex-1 gap-2">
         <View className="bg-background p-2 px-4">
           <SearchInput
