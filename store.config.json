@@ -3,9 +3,9 @@
   "apple": {
     "info": {
       "en-US": {
-        "title": "SDA Hymnal",
-        "subtitle": "Simple SDA Hymnal",
-        "description": "App that lets your browse the SDA Hymnal and play accompaniment",
+        "title": "Simple SDA Hymnal",
+        "subtitle": "Play your favorite hymns",
+        "description": "A simple, easy-to-use app for playing your favorite hymns. Perfect for church services, personal worship, and more.",
         "keywords": [
           "SDA",
           "hymnal",
@@ -14,8 +14,8 @@
           "church",
           "seventh-day adventist"
         ],
-        "marketingUrl": "",
-        "supportUrl": "",
+        "marketingUrl": "https://github.com/cevr/hymnal",
+        "supportUrl": "https://github.com/cevr/hymnal/issues",
         "privacyPolicyUrl": ""
       }
     }
