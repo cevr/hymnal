@@ -1,5 +1,5 @@
 import { Icon } from '@roninoss/icons';
-import { Stack, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import * as React from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { ScrollView, View } from 'react-native';
@@ -8,7 +8,6 @@ import { Button } from '~/components/nativewindui/button';
 import { Slider } from '~/components/nativewindui/slider';
 import { Text } from '~/components/nativewindui/text';
 import { useAudio } from '~/features/audio';
-import { ToggleFavoriteButton } from '~/features/hymns/toggle-favorite-button';
 import { useColorScheme } from '~/lib/use-color-scheme';
 
 import { useHymn, useUpdateHymnViews } from '../../features/db/context';
@@ -27,23 +26,15 @@ export default function HymnScreen(): React.ReactElement {
   }, [id]);
 
   return (
-    <>
-      <Stack.Screen
-        options={{
-          title: params.hymn,
-          headerRight: () => <ToggleFavoriteButton id={id} />,
-        }}
-      />
-      <View className="flex-1">
-        <HymnLyrics id={id} />
-        {/* above 695 is not music but call/response */}
-        {id <= 695 ? (
-          <ErrorBoundary fallback={null}>
-            <AudioPlayer id={id} />
-          </ErrorBoundary>
-        ) : null}
-      </View>
-    </>
+    <View className="flex-1">
+      <HymnLyrics id={id} />
+      {/* above 695 is not music but call/response */}
+      {id <= 695 ? (
+        <ErrorBoundary fallback={null}>
+          <AudioPlayer id={id} />
+        </ErrorBoundary>
+      ) : null}
+    </View>
   );
 }
 

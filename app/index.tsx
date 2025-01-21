@@ -33,8 +33,6 @@ export default function HymnsScreen(): React.ReactElement {
     <>
       <Stack.Screen
         options={{
-          title: 'Hymns',
-          headerShadowVisible: false,
           headerRight: () => (
             <Button
               variant="plain"

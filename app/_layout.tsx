@@ -10,6 +10,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 
 import { cache } from '~/features/cache';
+import { ToggleFavoriteButton } from '~/features/hymns/toggle-favorite-button';
 import { RootProvider } from '~/features/root-provider';
 import {
   useColorScheme,
@@ -21,6 +22,11 @@ export {
   // Catch any errors thrown by the Layout component.
   ErrorBoundary,
 } from 'expo-router';
+
+export const unstable_settings = {
+  // Ensure any route can link back to `/`
+  initialRouteName: 'index',
+};
 
 export default function RootLayout() {
   useInitialAndroidBarSync();
@@ -42,7 +48,37 @@ export default function RootLayout() {
                   backgroundColor: colors.background,
                 },
               }}
-            />
+            >
+              <Stack.Screen
+                name="index"
+                options={{
+                  title: 'Hymns',
+                  headerTitle: 'Hymns',
+                  headerShadowVisible: false,
+                }}
+              />
+              <Stack.Screen
+                name="hymns/[hymn]"
+                options={({ route }) => ({
+                  title: (
+                    route?.params as {
+                      hymn: string;
+                    }
+                  )?.hymn,
+                  headerRight: () => (
+                    <ToggleFavoriteButton
+                      id={
+                        +(
+                          route?.params as {
+                            hymn: string;
+                          }
+                        )?.hymn
+                      }
+                    />
+                  ),
+                })}
+              />
+            </Stack>
             <PortalHost />
           </RootProvider>
         </QueryClientProvider>
