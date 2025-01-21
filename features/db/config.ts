@@ -45,6 +45,10 @@ export async function initDatabase() {
       })
       .where(eq(schema.settings.id, 1))
       .prepare(),
+    get_total_views: db
+      .select({ count: sql<number>`SUM(${schema.hymns.views})` })
+      .from(schema.hymns)
+      .prepare(),
   };
   return { db, sqlite, prepared };
 }

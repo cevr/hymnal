@@ -46,6 +46,14 @@ const makeOptions = (client: QueryClient, database: Database) => {
       },
       staleTime: Infinity,
     }),
+    totalViews: queryOptions({
+      queryKey: ['total_views'],
+      queryFn: async () => {
+        const res = await database.prepared.get_total_views.execute();
+        return res[0].count;
+      },
+      staleTime: Infinity,
+    }),
   };
 
   client.prefetchQuery(options.hymns);
@@ -85,6 +93,12 @@ function useDb(): Database['db'] {
   return db.db;
 }
 
+function usePrepared() {
+  const db = React.useContext(DatabaseContext);
+  invariant(db, '[use_db] must be used within a DatabaseProvider');
+  return db.prepared;
+}
+
 function useDbQueryOptions(): DatabaseQueryOptions {
   const client = React.useContext(DatabaseQueryOptionsContext);
   invariant(client, '[use_db_client] must be used within a DatabaseProvider');
@@ -101,6 +115,7 @@ export function useUpdateHymnViews() {
       .set({ views: sql`${schema.hymns.views} + 1` })
       .where(eq(schema.hymns.id, id));
     client.invalidateQueries(options.hymns);
+    client.invalidateQueries(options.totalViews);
   };
 }
 
@@ -170,4 +185,16 @@ export function useCategories(): Category[] {
 export function useSettings(): Settings {
   const options = useDbQueryOptions();
   return useSuspenseQuery(options.settings).data;
+}
+
+export function useTotalHymnViews(): number {
+  const options = useDbQueryOptions();
+  return useSuspenseQuery(options.totalViews).data;
+}
+
+export function useGetTotalHymnViews(): () => Promise<number> {
+  const prepare = usePrepared();
+  return async () => {
+    return await prepare.get_total_views.execute().then((res) => res[0].count);
+  };
 }
