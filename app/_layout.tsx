@@ -10,7 +10,6 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 
 import { cache } from '~/features/cache';
-import { ToggleFavoriteButton } from '~/features/hymns/toggle-favorite-button';
 import { RootProvider } from '~/features/root-provider';
 import {
   useColorScheme,
@@ -65,17 +64,6 @@ export default function RootLayout() {
                       hymn: string;
                     }
                   )?.hymn,
-                  headerRight: () => (
-                    <ToggleFavoriteButton
-                      id={
-                        +(
-                          route?.params as {
-                            hymn: string;
-                          }
-                        )?.hymn
-                      }
-                    />
-                  ),
                 })}
               />
             </Stack>

@@ -1,34 +1,79 @@
 import { Icon } from '@roninoss/icons';
-import { useLocalSearchParams } from 'expo-router';
+import { FlashList } from '@shopify/flash-list';
+import { Stack, useLocalSearchParams } from 'expo-router';
 import * as React from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
-import { ScrollView, View } from 'react-native';
+import { Dimensions, ScrollView, View } from 'react-native';
 
 import { Button } from '~/components/nativewindui/button';
 import { Slider } from '~/components/nativewindui/slider';
 import { Text } from '~/components/nativewindui/text';
 import { useAudio } from '~/features/audio';
+import { ToggleFavoriteButton } from '~/features/hymns/toggle-favorite-button';
 import { useColorScheme } from '~/lib/use-color-scheme';
 
-import { useHymn, useUpdateHymnViews } from '../../features/db/context';
+import {
+  useHymn,
+  useHymns,
+  useUpdateHymnViews,
+} from '../../features/db/context';
 
 export default function HymnScreen(): React.ReactElement {
   const params = useLocalSearchParams<{
     hymn: string;
   }>();
 
-  const handleViewUpdate = useUpdateHymnViews();
+  const hymns = useHymns();
+  const handleHymnViewUpdate = useUpdateHymnViews();
 
-  const id = parseInt(params.hymn, 10);
+  const [currentHymn, setCurrentHymn] = React.useState(() => +params.hymn);
+  const dimensions = Dimensions.get('window');
 
-  React.useEffect(() => {
-    handleViewUpdate(id);
-  }, [id]);
+  return (
+    <>
+      <Stack.Screen
+        options={{
+          headerTitle: currentHymn.toString(),
+          headerRight: () => <ToggleFavoriteButton id={currentHymn} />,
+        }}
+      />
+      <FlashList
+        data={hymns}
+        horizontal
+        pagingEnabled
+        onViewableItemsChanged={(items) => {
+          items.viewableItems.forEach((v) => {
+            handleHymnViewUpdate(v.item.id);
+            setCurrentHymn(v.item.id);
+          });
+        }}
+        renderItem={({ item }) => (
+          <View
+            style={{
+              width: dimensions.width,
+              height: dimensions.height - 104,
+            }}
+          >
+            <HymnView id={item.id} />
+          </View>
+        )}
+        estimatedItemSize={dimensions.width}
+        showsHorizontalScrollIndicator={false}
+        keyExtractor={(item) => item.id.toString()}
+        initialScrollIndex={hymns.findIndex((h) => h.id === +params.hymn)}
+      />
+    </>
+  );
+}
 
+const HymnView = React.memo(function HymnView({
+  id,
+}: {
+  id: number;
+}): React.ReactNode {
   return (
     <View className="flex-1">
       <HymnLyrics id={id} />
-      {/* above 695 is not music but call/response/verses */}
       {id <= 695 ? (
         <ErrorBoundary fallback={null}>
           <AudioPlayer id={id} />
@@ -36,7 +81,7 @@ export default function HymnScreen(): React.ReactElement {
       ) : null}
     </View>
   );
-}
+});
 
 type Refrain = {
   id: number;
