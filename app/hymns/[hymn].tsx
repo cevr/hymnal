@@ -1,21 +1,23 @@
-import { Icon } from '@roninoss/icons';
 import { FlashList } from '@shopify/flash-list';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import * as React from 'react';
 import { Dimensions, ScrollView, View } from 'react-native';
 
-import { Button } from '~/components/nativewindui/button';
-import { Slider } from '~/components/nativewindui/slider';
 import { Text } from '~/components/nativewindui/text';
-import { useAudio } from '~/features/audio';
+import {
+  AUDIO_HEIGHT,
+  AudioPlayer,
+  AudioPlayerFallback,
+} from '~/features/audio';
 import { ToggleFavoriteButton } from '~/features/hymns/toggle-favorite-button';
-import { useColorScheme } from '~/lib/use-color-scheme';
 
 import {
   useHymn,
   useHymns,
   useUpdateHymnViews,
 } from '../../features/db/context';
+
+const BASE_HEIGHT = 100;
 
 export default function HymnScreen(): React.ReactElement {
   const params = useLocalSearchParams<{
@@ -36,32 +38,42 @@ export default function HymnScreen(): React.ReactElement {
           headerRight: () => <ToggleFavoriteButton id={currentHymn} />,
         }}
       />
-      <FlashList
-        data={hymns}
-        horizontal
-        pagingEnabled
-        onViewableItemsChanged={(items) => {
-          items.viewableItems.forEach((v) => {
-            handleHymnViewUpdate(v.item.id);
-            setCurrentHymn(v.item.id);
-          });
+      <View
+        style={{
+          height: dimensions.height - (BASE_HEIGHT + AUDIO_HEIGHT),
         }}
-        renderItem={({ item }) => (
-          <View
-            style={{
-              width: dimensions.width,
-              height: dimensions.height - (currentHymn <= 692 ? 200 : 100),
-            }}
-          >
-            <HymnLyrics id={item.id} />
-          </View>
-        )}
-        estimatedItemSize={dimensions.width}
-        showsHorizontalScrollIndicator={false}
-        keyExtractor={(item) => item.id.toString()}
-        initialScrollIndex={hymns.findIndex((h) => h.id === +params.hymn)}
-      />
-      {currentHymn <= 695 ? <AudioPlayer id={currentHymn} /> : null}
+      >
+        <FlashList
+          data={hymns}
+          horizontal
+          pagingEnabled
+          onViewableItemsChanged={(items) => {
+            items.viewableItems.forEach((v) => {
+              handleHymnViewUpdate(v.item.id);
+              setCurrentHymn(v.item.id);
+            });
+          }}
+          renderItem={({ item }) => (
+            <View
+              style={{
+                width: dimensions.width,
+                height: '100%',
+              }}
+            >
+              <HymnLyrics id={item.id} />
+            </View>
+          )}
+          estimatedItemSize={dimensions.width}
+          showsHorizontalScrollIndicator={false}
+          keyExtractor={(item) => item.id.toString()}
+          initialScrollIndex={hymns.findIndex((h) => h.id === +params.hymn)}
+        />
+      </View>
+      {currentHymn <= 695 ? (
+        <AudioPlayer id={currentHymn} />
+      ) : (
+        <AudioPlayerFallback />
+      )}
     </>
   );
 }
@@ -118,7 +130,7 @@ const HymnLyrics = React.memo(function HymnLyrics({
   }, [] as Lyric[]);
 
   return (
-    <ScrollView className="flex-1 gap-4 bg-card p-4">
+    <ScrollView className="flex-1 gap-4 bg-card p-4 pb-24">
       <Text
         variant="title2"
         className="mb-4 font-bold text-foreground"
@@ -151,55 +163,3 @@ const HymnLyrics = React.memo(function HymnLyrics({
     </ScrollView>
   );
 });
-
-type AudioPlayerProps = {
-  id: number;
-};
-
-const AudioPlayer = React.memo(function AudioPlayer({
-  id,
-}: AudioPlayerProps): React.ReactNode {
-  const { player, status } = useAudio(id);
-  const { colors } = useColorScheme();
-
-  return (
-    <View className="flex-row items-center justify-between gap-4 border-t-2 border-gray-200 bg-background p-4 pb-12 dark:border-gray-800">
-      <Button
-        hitSlop={10}
-        variant="plain"
-        onPress={() => {
-          if (status.playing) {
-            player.pause();
-          } else {
-            player.play();
-          }
-        }}
-      >
-        <Icon
-          name={status.playing ? 'pause' : 'play'}
-          size={24}
-          color={colors.foreground}
-        />
-      </Button>
-      <Slider
-        style={{ flex: 1 }}
-        minimumValue={0}
-        maximumValue={1}
-        value={status.currentTime / status.duration}
-        onValueChange={(value) => {
-          player.seekTo(status.duration * value);
-        }}
-      />
-      <Text variant="subhead">
-        {secondsToMinutes(player.currentTime)} /{' '}
-        {secondsToMinutes(player.duration)}
-      </Text>
-    </View>
-  );
-});
-
-function secondsToMinutes(seconds: number): string {
-  return `${Math.floor(seconds / 60)}:${Math.floor(seconds % 60)
-    .toString()
-    .padStart(2, '0')}`;
-}
