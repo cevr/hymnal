@@ -17,7 +17,7 @@ import {
   useUpdateHymnViews,
 } from '../../features/db/context';
 
-const BASE_HEIGHT = 100;
+const HEADER_HEIGHT = 100;
 
 export default function HymnScreen(): React.ReactElement {
   const params = useLocalSearchParams<{
@@ -40,7 +40,7 @@ export default function HymnScreen(): React.ReactElement {
       />
       <View
         style={{
-          height: dimensions.height - (BASE_HEIGHT + AUDIO_HEIGHT),
+          height: dimensions.height - (HEADER_HEIGHT + AUDIO_HEIGHT),
         }}
       >
         <FlashList
