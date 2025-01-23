@@ -2,7 +2,6 @@ import { Icon } from '@roninoss/icons';
 import { FlashList } from '@shopify/flash-list';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import * as React from 'react';
-import { ErrorBoundary } from 'react-error-boundary';
 import { Dimensions, ScrollView, View } from 'react-native';
 
 import { Button } from '~/components/nativewindui/button';
@@ -51,10 +50,10 @@ export default function HymnScreen(): React.ReactElement {
           <View
             style={{
               width: dimensions.width,
-              height: dimensions.height - 104,
+              height: dimensions.height - (currentHymn <= 692 ? 200 : 100),
             }}
           >
-            <HymnView id={item.id} />
+            <HymnLyrics id={item.id} />
           </View>
         )}
         estimatedItemSize={dimensions.width}
@@ -62,26 +61,10 @@ export default function HymnScreen(): React.ReactElement {
         keyExtractor={(item) => item.id.toString()}
         initialScrollIndex={hymns.findIndex((h) => h.id === +params.hymn)}
       />
+      {currentHymn <= 695 ? <AudioPlayer id={currentHymn} /> : null}
     </>
   );
 }
-
-const HymnView = React.memo(function HymnView({
-  id,
-}: {
-  id: number;
-}): React.ReactNode {
-  return (
-    <View className="flex-1">
-      <HymnLyrics id={id} />
-      {id <= 695 ? (
-        <ErrorBoundary fallback={null}>
-          <AudioPlayer id={id} />
-        </ErrorBoundary>
-      ) : null}
-    </View>
-  );
-});
 
 type Refrain = {
   id: number;
