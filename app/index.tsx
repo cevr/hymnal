@@ -76,19 +76,18 @@ const HymnList = React.memo(function HymnList({
 }) {
   const listRef = React.useRef<FlashList<any>>(null);
   const categories = useCategories();
-  const hymns = useHymns();
-
-  let filteredHymns = hymns;
+  let hymns = useHymns();
 
   if (showFavorites) {
-    filteredHymns = filteredHymns.filter((hymn) => hymn.favorite === 1);
+    hymns = hymns.filter((hymn) => hymn.favorite === 1);
   }
 
   if (query) {
-    filteredHymns = matchSorter(filteredHymns, query, {
+    hymns = matchSorter(hymns, query, {
       keys: ['id', 'name'],
     });
   }
+
   const categoryMap = categories.reduce((acc, category) => {
     acc[category.id] = 0;
     return acc;
@@ -100,7 +99,7 @@ const HymnList = React.memo(function HymnList({
     }
   }, [query]);
 
-  const listData = filteredHymns.reduce((acc, hymn) => {
+  const data = hymns.reduce((acc, hymn) => {
     const categoryCount = categoryMap[hymn.category_id];
     if (categoryCount === 0) {
       acc.push(hymn.category);
@@ -119,7 +118,7 @@ const HymnList = React.memo(function HymnList({
   return (
     <List
       variant="insets"
-      data={listData}
+      data={data}
       estimatedItemSize={ESTIMATED_ITEM_HEIGHT.withSubTitle}
       renderItem={renderItem}
       ListEmptyComponent={() => {
@@ -130,6 +129,7 @@ const HymnList = React.memo(function HymnList({
             </View>
           );
         }
+
         if (showFavorites) {
           return (
             <View className="flex-1 items-center justify-center">
@@ -145,7 +145,8 @@ const HymnList = React.memo(function HymnList({
             </View>
           );
         }
-        if (filteredHymns.length === 0) {
+
+        if (hymns.length === 0) {
           return (
             <View className="flex-1 items-center justify-center">
               <Text className="text-lg">
