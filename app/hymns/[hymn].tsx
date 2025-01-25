@@ -49,7 +49,7 @@ export default function HymnScreen(): React.ReactElement {
           pagingEnabled
           onViewableItemsChanged={(items) => {
             items.viewableItems.forEach((v) => {
-              handleHymnViewUpdate(v.item.id);
+              void handleHymnViewUpdate(v.item.id);
               setCurrentHymn(v.item.id);
             });
           }}

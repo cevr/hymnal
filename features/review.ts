@@ -25,11 +25,11 @@ export function Reviewer(): React.ReactNode {
     }
 
     const timeout = setTimeout(() => {
-      showRequestReview();
+      void showRequestReview();
     }, 1000);
 
     return () => clearTimeout(timeout);
-  }, []);
+  }, [getViews]);
 
   return null;
 }

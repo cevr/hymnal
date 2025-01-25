@@ -87,7 +87,7 @@ export const AudioPlayer = React.memo(function AudioPlayer({
         maximumValue={1}
         value={status.currentTime / status.duration}
         onValueChange={(value) => {
-          player.seekTo(status.duration * value);
+          void player.seekTo(status.duration * value);
         }}
       />
       <Text variant="subhead">

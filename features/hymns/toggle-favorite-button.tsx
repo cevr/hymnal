@@ -5,10 +5,6 @@ import { useColorScheme } from '~/lib/use-color-scheme';
 
 import { useHymn, useToggleHymnFavorite } from '../db/context';
 
-interface ToggleFavoriteButtonProps {
-  id: number;
-}
-
 export function ToggleFavoriteButton({ id }: { id: number }): React.ReactNode {
   const hymn = useHymn(id);
   const hymnFavoriteToggle = useToggleHymnFavorite();
@@ -30,9 +26,7 @@ export function ToggleFavoriteButton({ id }: { id: number }): React.ReactNode {
   );
 }
 
-export function ToggleFavoriteButtonFallback(
-  props: Omit<ToggleFavoriteButtonProps, 'id'>,
-): React.ReactNode {
+export function ToggleFavoriteButtonFallback(): React.ReactNode {
   return (
     <Button
       variant="plain"
