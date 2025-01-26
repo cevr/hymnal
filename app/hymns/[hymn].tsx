@@ -17,7 +17,7 @@ import {
   useUpdateHymnViews,
 } from '../../features/db/context';
 
-const HEADER_HEIGHT = 100;
+const HEADER_HEIGHT = 120;
 
 export default function HymnScreen(): React.ReactElement {
   const params = useLocalSearchParams<{
