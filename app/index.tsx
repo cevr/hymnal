@@ -1,5 +1,5 @@
 import { Icon } from '@roninoss/icons';
-import { FlashList } from '@shopify/flash-list';
+import type { FlashList } from '@shopify/flash-list';
 import { router, Stack } from 'expo-router';
 import { matchSorter } from 'match-sorter';
 import * as React from 'react';
@@ -10,12 +10,13 @@ import {
   ESTIMATED_ITEM_HEIGHT,
   List,
   ListItem,
-  ListRenderItemInfo,
   ListSectionHeader,
 } from '~/components/nativewindui/list';
+import type { ListRenderItemInfo } from '~/components/nativewindui/list';
 import { SearchInput } from '~/components/nativewindui/search-input';
 import { Text } from '~/components/nativewindui/text';
-import { Hymn, useCategories, useHymns } from '~/features/db/context';
+import { useCategories, useHymns } from '~/features/db/context';
+import type { Hymn } from '~/features/db/context';
 import {
   ToggleFavoriteButton,
   ToggleFavoriteButtonFallback,
